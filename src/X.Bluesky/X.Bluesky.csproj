@@ -4,7 +4,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Andrew Gubskiy</Authors>
-        <Description>Simple posting client for Bluesky</Description>
+        <Description>Simple client for posting to Bluesky</Description>
         <Copyright>Andrew Gubskiy</Copyright>
         <PackageProjectUrl>https://github.com/ernado-x/X.Bluesky</PackageProjectUrl>
         <PackageTags>bluesky, social networks</PackageTags>
@@ -12,13 +12,26 @@
         <FileVersion>1.0.0.0</FileVersion>
         <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
         <LangVersion>default</LangVersion>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Title>X.Bluesky</Title>
+        <PackageLicenseUrl>https://raw.githubusercontent.com/ernado-x/X.Bluesky/main/LICENSE</PackageLicenseUrl>
+        <PackageIcon>icon.png</PackageIcon>
+        <RepositoryUrl>https://github.com/ernado-x/X.Bluesky</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-        <PackageReference Include="X.Web.MetaExtractor" Version="1.8.0" />
+        <PackageReference Include="X.Web.MetaExtractor" Version="1.8.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="icon.png">
+        <Pack>True</Pack>
+        <PackagePath></PackagePath>
+      </None>
     </ItemGroup>
 
 </Project>
