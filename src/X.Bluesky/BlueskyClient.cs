@@ -6,7 +6,8 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization; // Make sure to include Newtonsoft.Json package
+using Newtonsoft.Json.Serialization;
+using X.Bluesky.Models;
 
 namespace X.Bluesky;
 
@@ -19,10 +20,10 @@ public interface IBlueskyClient
 
 public class BlueskyClient : IBlueskyClient
 {
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _identifier;
     private readonly string _password;
-    private readonly ILogger<BlueskyClient> _logger;
+    private readonly ILogger _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly IReadOnlyCollection<string> _languages;
 
     /// <summary>
@@ -71,13 +72,13 @@ public class BlueskyClient : IBlueskyClient
     {
     }
 
-    private async Task CreatePost(BlueskySession blueskySession, string text, Uri? url)
+    private async Task CreatePost(Session session, string text, Uri? url)
     {
         // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
         var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
         // Required fields for the post
-        var post = new BlueskyPost
+        var post = new Post
         {
             Type = "app.bsky.feed.post",
             Text = text,
@@ -110,18 +111,18 @@ public class BlueskyClient : IBlueskyClient
             //     }
             // };
 
-            post.Embed = new BlueskyEmbed
+            post.Embed = new Embed
             {
-                External = await CreateEmbedCardAsync(url, blueskySession.AccessJwt),
+                External = await CreateEmbedCardAsync(url, session.AccessJwt),
                 Type = "app.bsky.embed.external"
             };
         }
 
         var requestUri = "https://bsky.social/xrpc/com.atproto.repo.createRecord";
 
-        var requestData = new BlueskyPostRequest
+        var requestData = new PostRequest
         {
-            Repo = blueskySession.Did,
+            Repo = session.Did,
             Collection = "app.bsky.feed.post",
             Record = post
         };
@@ -138,7 +139,7 @@ public class BlueskyClient : IBlueskyClient
         var httpClient = _httpClientFactory.CreateClient();
 
         // Add the Authorization header with the bearer token
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", blueskySession.AccessJwt);
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessJwt);
 
         var response = await httpClient.PostAsync(requestUri, content);
 
@@ -167,7 +168,7 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="identifier">Account identifier</param>
     /// <param name="password">App password</param>
     /// <returns></returns>
-    private async Task<BlueskySession?> Authorize(string identifier, string password)
+    private async Task<Session?> Authorize(string identifier, string password)
     {
         var requestData = new
         {
@@ -188,15 +189,15 @@ public class BlueskyClient : IBlueskyClient
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
 
-        return JsonConvert.DeserializeObject<BlueskySession>(jsonResponse);
+        return JsonConvert.DeserializeObject<Session>(jsonResponse);
     }
 
-    private async Task<BlueskyEmbedCard> CreateEmbedCardAsync(Uri url, string accessToken)
+    private async Task<EmbedCard> CreateEmbedCardAsync(Uri url, string accessToken)
     {
         var extractor = new Web.MetaExtractor.Extractor();
         var metadata = await extractor.ExtractAsync(url);
 
-        var card = new BlueskyEmbedCard
+        var card = new EmbedCard
         {
             Uri = url.ToString(),
             Title = metadata.Title,
@@ -255,7 +256,7 @@ public class BlueskyClient : IBlueskyClient
     //     return string.Empty;
     // }
 
-    private async Task<BlueskyThumb?> UploadImageAndSetThumbAsync(string imageUrl, string accessToken)
+    private async Task<Thumb?> UploadImageAndSetThumbAsync(string imageUrl, string accessToken)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -281,7 +282,7 @@ public class BlueskyClient : IBlueskyClient
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        var blob = JsonConvert.DeserializeObject<BlueskyBlobResponse>(json);
+        var blob = JsonConvert.DeserializeObject<BlobResponse>(json);
 
         var card = blob?.Blob;
 

@@ -1,6 +1,6 @@
-namespace X.Bluesky;
+namespace X.Bluesky.Models;
 
-public record BlueskySession
+public record Session
 {
     public string AccessJwt { get; set; } = "";
     public string Did { get; set; } = "";

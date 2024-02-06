@@ -1,41 +1,41 @@
 using Newtonsoft.Json;
 
-namespace X.Bluesky;
+namespace X.Bluesky.Models;
 
-public record BlueskyPost
+public record Post
 {
-    [JsonProperty("$type")] 
+    [JsonProperty("$type")]
     public string Type { get; set; } = "";
 
     public string Text { get; set; } = "";
 
     public string CreatedAt { get; set; } = "";
 
-    public BlueskyEmbed Embed { get; set; } = new();
+    public Embed Embed { get; set; } = new();
 
     public List<string> Langs { get; set; } = new();
 
-    public List<BlueskyFacet>? Facets { get; set; } = null;
+    public List<Facet>? Facets { get; set; } = null;
 }
 
-public record BlueskyEmbed
+public record Embed
 {
-    [JsonProperty("$type")] 
+    [JsonProperty("$type")]
     public string Type { get; set; } = "";
 
-    public BlueskyEmbedCard External { get; set; } = new();
+    public EmbedCard External { get; set; } = new();
 }
 
-public record BlueskyFacet
+public record Facet
 {
     public BlueskyFacetIndex Index { get; set; } = new();
 
-    public List<BlueskyFacetFeature> Features { get; set; } = new();
+    public List<FacetFeature> Features { get; set; } = new();
 }
 
-public record BlueskyFacetFeature
+public record FacetFeature
 {
-    [JsonProperty("$type")] 
+    [JsonProperty("$type")]
     public string Type { get; set; } = "";
 
     public Uri? Uri { get; set; }

@@ -1,27 +1,27 @@
 using Newtonsoft.Json;
 
-namespace X.Bluesky;
+namespace X.Bluesky.Models;
 
-public class BlueskyEmbedCard
+public record EmbedCard
 {
     public string Uri { get; set; } = "";
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
-    public BlueskyThumb? Thumb { get; set; }
+    public Thumb? Thumb { get; set; }
 }
 
-public record BlueskyBlobResponse
+public record BlobResponse
 {
-    public BlueskyThumb? Blob { get; set; }
+    public Thumb? Blob { get; set; }
 }
 
-public record BlueskyThumb
+public record Thumb
 {
     [JsonProperty("$type")]
     public string Type { get; set; } = "";
 
     [JsonProperty("ref")]
-    public BlueskyThumbRef? Ref { get; set; }
+    public ThumbRef? Ref { get; set; }
 
     [JsonProperty("mimeType")]
     public string MimeType { get; set; } = "";
@@ -30,7 +30,7 @@ public record BlueskyThumb
     public int Size { get; set; }
 }
 
-public class BlueskyThumbRef
+public class ThumbRef
 {
     [JsonProperty("$link")]
     public string Link { get; set; } = "";
