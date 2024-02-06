@@ -14,11 +14,10 @@ public class BlueskyIntegrationTest
         var password = "{password-here}";
         
         IBlueskyClient client = new BlueskyClient(identifier, password);
-        
 
         var link = new Uri("https://devdigest.today/post/2431");
 
-        await client.Post("Hellow world!", link);
+        await client.Post("Hello world!", link);
         
         Assert.True(true);
     }
