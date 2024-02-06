@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Andrew Gubskiy</Authors>
@@ -11,6 +10,8 @@
         <PackageTags>bluesky, social networks</PackageTags>
         <AssemblyVersion>1.0.0.0</AssemblyVersion>
         <FileVersion>1.0.0.0</FileVersion>
+        <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
