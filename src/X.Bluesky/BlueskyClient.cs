@@ -1,7 +1,10 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Collections.Immutable;
+using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
 using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization; // Make sure to include Newtonsoft.Json package
 
@@ -18,23 +21,57 @@ public class BlueskyClient : IBlueskyClient
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _identifier;
-    private readonly string _appPassword;
+    private readonly string _password;
+    private readonly ILogger<BlueskyClient> _logger;
     private readonly IReadOnlyCollection<string> _languages;
 
-    public BlueskyClient(IHttpClientFactory httpClientFactory, string identifier, string appPassword)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    /// <param name="languages">Post languages</param>
+    /// <param name="logger"></param>
+    public BlueskyClient(
+        IHttpClientFactory httpClientFactory,
+        string identifier,
+        string password,
+        IEnumerable<string> languages,
+        ILogger<BlueskyClient> logger)
     {
         _httpClientFactory = httpClientFactory;
         _identifier = identifier;
-        _appPassword = appPassword;
-        _languages = new List<string> { "en", "en-US" };
+        _password = password;
+        _logger = logger;
+        _languages = languages?.ToImmutableList() ?? ImmutableList<string>.Empty;
     }
 
-    public BlueskyClient(string identifier, string appPassword)
-        : this(new HttpClientFactory(), identifier, appPassword)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    public BlueskyClient(
+        IHttpClientFactory httpClientFactory,
+        string identifier,
+        string password)
+        : this(httpClientFactory, identifier, password, new[] { "en", "en-US" }, NullLogger<BlueskyClient>.Instance)
     {
     }
 
-    private async Task<bool> CreatePost(BlueskySession blueskySession, string text, Uri? url)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    public BlueskyClient(string identifier, string password)
+        : this(new HttpClientFactory(), identifier, password)
+    {
+    }
+
+    private async Task CreatePost(BlueskySession blueskySession, string text, Uri? url)
     {
         // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
         var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -43,7 +80,6 @@ public class BlueskyClient : IBlueskyClient
         var post = new BlueskyPost
         {
             Type = "app.bsky.feed.post",
-            //Text = $"{text} {url}".Trim(),
             Text = text,
             CreatedAt = now,
             Langs = _languages.ToList()
@@ -109,12 +145,11 @@ public class BlueskyClient : IBlueskyClient
         var ensureSuccessStatusCode = response.EnsureSuccessStatusCode();
 
         // This throws an exception if the HTTP response status is an error code.
-        return ensureSuccessStatusCode.IsSuccessStatusCode;
     }
 
     public async Task Post(string text, Uri? uri)
     {
-        var session = await Authorize(_identifier, _appPassword);
+        var session = await Authorize(_identifier, _password);
 
         if (session == null)
         {
@@ -233,57 +268,54 @@ public class BlueskyClient : IBlueskyClient
         var imageContent = new StreamContent(await imgResp.Content.ReadAsStreamAsync());
         imageContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
-        var requestMessage =
-            new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
-            {
-                Content = imageContent,
-            };
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
+        {
+            Content = imageContent,
+        };
 
         // Add the Authorization header with the access token to the request message
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var blobResp = await httpClient.SendAsync(requestMessage);
+        var response = await httpClient.SendAsync(request);
 
-        blobResp.EnsureSuccessStatusCode();
+        response.EnsureSuccessStatusCode();
 
-        var blobRespContent = await blobResp.Content.ReadAsStringAsync();
-        var blob = JsonConvert.DeserializeObject<BlueskyBlobResponse>(blobRespContent);
+        var json = await response.Content.ReadAsStringAsync();
+        var blob = JsonConvert.DeserializeObject<BlueskyBlobResponse>(json);
 
         var card = blob?.Blob;
 
         if (card != null)
         {
-            card.Type = "blob"; //fix it
+            // ToDo: fix it
+            // This is hack for fix problem when Type is empty after deserialization
+            card.Type = "blob"; 
         }
 
         return card;
     }
 
-    public static string GetFileExtensionFromUrl(string url)
+    public string GetFileExtensionFromUrl(string url)
     {
         try
         {
             var uri = new Uri(url);
-            // Extract the last segment of the URL path
-            string path = uri.AbsolutePath;
-            int lastIndex = path.LastIndexOf('.');
+           var lastIndex = uri.AbsolutePath.LastIndexOf('.');
 
-            if (lastIndex != -1 && lastIndex < path.Length - 1)
+            if (lastIndex != -1 && lastIndex < uri.AbsolutePath.Length - 1)
             {
                 // Return the file extension, including the dot
-                return path.Substring(lastIndex);
+                return uri.AbsolutePath.Substring(lastIndex);
             }
         }
         catch (Exception ex)
         {
-            // Handle or log the exception as needed
-            Console.WriteLine($"Error extracting file extension: {ex.Message}");
+            _logger.LogWarning($"Error extracting file extension: {ex.Message}", ex);
         }
 
-        // Return an empty string or null if no extension found or an error occurred
-        return "";
+        // Return an empty string if no extension found or an error occurred
+        return string.Empty;
     }
-
 
     public static string GetMimeType(string extension)
     {
