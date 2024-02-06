@@ -28,7 +28,7 @@ public record Embed
 
 public record Facet
 {
-    public BlueskyFacetIndex Index { get; set; } = new();
+    public FacetIndex Index { get; set; } = new();
 
     public List<FacetFeature> Features { get; set; } = new();
 }
@@ -41,7 +41,7 @@ public record FacetFeature
     public Uri? Uri { get; set; }
 }
 
-public record BlueskyFacetIndex
+public record FacetIndex
 {
     public int ByteStart { get; set; }
 

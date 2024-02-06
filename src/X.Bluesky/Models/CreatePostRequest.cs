@@ -1,6 +1,6 @@
 namespace X.Bluesky.Models;
 
-public record PostRequest
+public record CreatePostRequest
 {
     public string Repo { get; set; }= "";
     public string Collection { get; set; } = "";

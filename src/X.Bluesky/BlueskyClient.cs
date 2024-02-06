@@ -14,8 +14,28 @@ namespace X.Bluesky;
 [PublicAPI]
 public interface IBlueskyClient
 {
-    Task Post(string text, Uri? uri);
+    /// <summary>
+    /// Make post with link
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
     Task Post(string text);
+    
+    /// <summary>
+    /// Make post with link (page preview will be attached)
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="uri"></param>
+    /// <returns></returns>
+    Task Post(string text, Uri? uri);
+
+    /// <summary>
+    /// Authorize in Bluesky
+    /// </summary>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    /// <returns></returns>
+    Task<Session?> Authorize(string identifier, string password);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -120,7 +140,7 @@ public class BlueskyClient : IBlueskyClient
 
         var requestUri = "https://bsky.social/xrpc/com.atproto.repo.createRecord";
 
-        var requestData = new PostRequest
+        var requestData = new CreatePostRequest
         {
             Repo = session.Did,
             Collection = "app.bsky.feed.post",
@@ -168,7 +188,7 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="identifier">Account identifier</param>
     /// <param name="password">App password</param>
     /// <returns></returns>
-    private async Task<Session?> Authorize(string identifier, string password)
+    public async Task<Session?> Authorize(string identifier, string password)
     {
         var requestData = new
         {
