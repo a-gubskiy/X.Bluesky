@@ -1,0 +1,264 @@
+﻿using System.Collections.Immutable;
+using System.Net.Http.Headers;
+using System.Security.Authentication;
+using System.Text;
+using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using X.Bluesky.Models;
+
+namespace X.Bluesky;
+
+[PublicAPI]
+public interface IBlueskyClient
+{
+    /// <summary>
+    /// Make post with link
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    Task Post(string text);
+    
+    /// <summary>
+    /// Make post with link (page preview will be attached)
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="uri"></param>
+    /// <returns></returns>
+    Task Post(string text, Uri? uri);
+
+    /// <summary>
+    /// Authorize in Bluesky
+    /// </summary>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    /// <returns></returns>
+    Task<Session?> Authorize(string identifier, string password);
+}
+
+public class BlueskyClient : IBlueskyClient
+{
+    private readonly string _identifier;
+    private readonly string _password;
+    private readonly ILogger _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IReadOnlyCollection<string> _languages;
+    private readonly FileTypeHelper _fileTypeHelper;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    /// <param name="languages">Post languages</param>
+    /// <param name="logger"></param>
+    public BlueskyClient(
+        IHttpClientFactory httpClientFactory,
+        string identifier,
+        string password,
+        IEnumerable<string> languages,
+        ILogger<BlueskyClient> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _identifier = identifier;
+        _password = password;
+        _logger = logger;
+        _fileTypeHelper = new FileTypeHelper(logger);
+        _languages = languages?.ToImmutableList() ?? ImmutableList<string>.Empty;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    public BlueskyClient(
+        IHttpClientFactory httpClientFactory,
+        string identifier,
+        string password)
+        : this(httpClientFactory, identifier, password, new[] { "en", "en-US" }, NullLogger<BlueskyClient>.Instance)
+    {
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    public BlueskyClient(string identifier, string password)
+        : this(new HttpClientFactory(), identifier, password)
+    {
+    }
+
+    private async Task CreatePost(Session session, string text, Uri? url)
+    {
+        // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
+        var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        // Required fields for the post
+        var post = new Post
+        {
+            Type = "app.bsky.feed.post",
+            Text = text,
+            CreatedAt = now,
+            Langs = _languages.ToList()
+        };
+
+        if (url != null)
+        {
+            post.Embed = new Embed
+            {
+                External = await CreateEmbedCardAsync(url, session.AccessJwt),
+                Type = "app.bsky.embed.external"
+            };
+        }
+
+        var requestUri = "https://bsky.social/xrpc/com.atproto.repo.createRecord";
+
+        var requestData = new CreatePostRequest
+        {
+            Repo = session.Did,
+            Collection = "app.bsky.feed.post",
+            Record = post
+        };
+
+        var jsonRequest = JsonConvert.SerializeObject(requestData, Formatting.Indented, new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented,
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            NullValueHandling = NullValueHandling.Ignore
+        });
+
+        var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+        var httpClient = _httpClientFactory.CreateClient();
+
+        // Add the Authorization header with the bearer token
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessJwt);
+
+        var response = await httpClient.PostAsync(requestUri, content);
+
+        var ensureSuccessStatusCode = response.EnsureSuccessStatusCode();
+
+        // This throws an exception if the HTTP response status is an error code.
+    }
+
+    public async Task Post(string text, Uri? uri)
+    {
+        var session = await Authorize(_identifier, _password);
+
+        if (session == null)
+        {
+            throw new AuthenticationException();
+        }
+
+        await CreatePost(session, text, uri);
+    }
+
+    public Task Post(string text) => Post(text, null);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="identifier">Account identifier</param>
+    /// <param name="password">App password</param>
+    /// <returns></returns>
+    public async Task<Session?> Authorize(string identifier, string password)
+    {
+        var requestData = new
+        {
+            identifier = identifier,
+            password = password
+        };
+
+        var json = JsonConvert.SerializeObject(requestData);
+
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var httpClient = _httpClientFactory.CreateClient();
+
+        var uri = "https://bsky.social/xrpc/com.atproto.server.createSession";
+        var response = await httpClient.PostAsync(uri, content);
+
+        response.EnsureSuccessStatusCode();
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+        return JsonConvert.DeserializeObject<Session>(jsonResponse);
+    }
+
+    private async Task<EmbedCard> CreateEmbedCardAsync(Uri url, string accessToken)
+    {
+        var extractor = new Web.MetaExtractor.Extractor();
+        var metadata = await extractor.ExtractAsync(url);
+
+        var card = new EmbedCard
+        {
+            Uri = url.ToString(),
+            Title = metadata.Title,
+            Description = metadata.Description
+        };
+
+        if (metadata.Images != null && metadata.Images.Any())
+        {
+            var imgUrl = metadata.Images.FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(imgUrl))
+            {
+                if (!imgUrl.Contains("://"))
+                {
+                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(url, imgUrl), accessToken);
+                }
+                else
+                {
+                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(imgUrl), accessToken);    
+                }
+            }
+        }
+
+        return card;
+    }
+
+    private async Task<Thumb?> UploadImageAndSetThumbAsync(Uri imageUrl, string accessToken)
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+
+        var imgResp = await httpClient.GetAsync(imageUrl);
+        imgResp.EnsureSuccessStatusCode();
+
+        var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(imageUrl);
+
+        var imageContent = new StreamContent(await imgResp.Content.ReadAsStreamAsync());
+        imageContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
+        {
+            Content = imageContent,
+        };
+
+        // Add the Authorization header with the access token to the request message
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await httpClient.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var blob = JsonConvert.DeserializeObject<BlobResponse>(json);
+
+        var card = blob?.Blob;
+
+        if (card != null)
+        {
+            // ToDo: fix it
+            // This is hack for fix problem when Type is empty after deserialization
+            card.Type = "blob"; 
+        }
+
+        return card;
+    }
+}
