@@ -219,24 +219,25 @@ public class BlueskyClient : IBlueskyClient
     //
     //     return string.Empty;
     // }
-    
-    private async Task<BlueskyThumb> UploadImageAndSetThumbAsync(string imageUrl, string accessToken)
+
+    private async Task<BlueskyThumb?> UploadImageAndSetThumbAsync(string imageUrl, string accessToken)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
         var imgResp = await httpClient.GetAsync(imageUrl);
         imgResp.EnsureSuccessStatusCode();
-    
+
         var extension = GetFileExtensionFromUrl(imageUrl);
         var mimeType = GetMimeType(extension);
-    
+
         var imageContent = new StreamContent(await imgResp.Content.ReadAsStreamAsync());
         imageContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
-    
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
-        {
-            Content = imageContent,
-        };
+
+        var requestMessage =
+            new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
+            {
+                Content = imageContent,
+            };
 
         // Add the Authorization header with the access token to the request message
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -248,8 +249,12 @@ public class BlueskyClient : IBlueskyClient
         var blobRespContent = await blobResp.Content.ReadAsStringAsync();
         var blob = JsonConvert.DeserializeObject<BlueskyBlobResponse>(blobRespContent);
 
-        var card = blob.Blob;
-        card.Type = "blob"; //fix it
+        var card = blob?.Blob;
+
+        if (card != null)
+        {
+            card.Type = "blob"; //fix it
+        }
 
         return card;
     }
