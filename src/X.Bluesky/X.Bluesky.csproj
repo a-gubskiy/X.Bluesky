@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Andrew Gubskiy</Authors>
+        <Description>Simple posting client for Bluesky</Description>
+        <Copyright>Andrew Gubskiy</Copyright>
+        <PackageProjectUrl>https://github.com/ernado-x/X.Bluesky</PackageProjectUrl>
+        <PackageTags>bluesky, social networks</PackageTags>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="X.Web.MetaExtractor" Version="1.8.0" />
+    </ItemGroup>
+
+</Project>
