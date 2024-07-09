@@ -87,6 +87,4 @@ public class FileTypeHelper
                 return "application/octet-stream"; // Default MIME type
         }
     }
-
-    
 }

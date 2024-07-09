@@ -26,21 +26,6 @@ public record Embed
     public EmbedCard External { get; set; } = new();
 }
 
-public record Facet
-{
-    public FacetIndex Index { get; set; } = new();
-
-    public List<FacetFeature> Features { get; set; } = new();
-}
-
-public record FacetFeature
-{
-    [JsonProperty("$type")]
-    public string Type { get; set; } = "";
-
-    public Uri? Uri { get; set; }
-}
-
 public record FacetIndex
 {
     public int ByteStart { get; set; }

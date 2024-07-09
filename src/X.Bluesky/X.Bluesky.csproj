@@ -9,9 +9,9 @@
         <Copyright>Andrew Gubskiy</Copyright>
         <PackageProjectUrl>https://github.com/ernado-x/X.Bluesky</PackageProjectUrl>
         <PackageTags>bluesky, social networks</PackageTags>
-        <AssemblyVersion>1.0.1.0</AssemblyVersion>
-        <FileVersion>1.0.1.0</FileVersion>
-        <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+        <AssemblyVersion>1.0.3.0</AssemblyVersion>
+        <FileVersion>1.0.3.0</FileVersion>
+        <TargetFrameworks>net8.0;net6.0;netstandard2.1</TargetFrameworks>
         <LangVersion>default</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Title>X.Bluesky</Title>
@@ -19,14 +19,14 @@
         <PackageIcon>icon.png</PackageIcon>
         <RepositoryUrl>https://github.com/ernado-x/X.Bluesky</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <Version>1.0.1</Version>
+        <Version>1.0.3</Version>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2024.2.0" PrivateAssets="all"/>
         <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-        <PackageReference Include="X.Web.MetaExtractor" Version="1.8.0"/>
+        <PackageReference Include="X.Web.MetaExtractor" Version="2.0.2" />
     </ItemGroup>
 
     <ItemGroup>

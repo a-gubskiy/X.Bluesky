@@ -20,22 +20,14 @@ public interface IBlueskyClient
     /// <param name="text"></param>
     /// <returns></returns>
     Task Post(string text);
-    
+
     /// <summary>
     /// Make post with link (page preview will be attached)
     /// </summary>
     /// <param name="text"></param>
     /// <param name="uri"></param>
     /// <returns></returns>
-    Task Post(string text, Uri? uri);
-
-    /// <summary>
-    /// Authorize in Bluesky
-    /// </summary>
-    /// <param name="identifier">Bluesky identifier</param>
-    /// <param name="password">Bluesky application password</param>
-    /// <returns></returns>
-    Task<Session?> Authorize(string identifier, string password);
+    Task Post(string text, Uri uri);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -45,7 +37,6 @@ public class BlueskyClient : IBlueskyClient
     private readonly ILogger _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IReadOnlyCollection<string> _languages;
-    private readonly FileTypeHelper _fileTypeHelper;
 
     /// <summary>
     /// 
@@ -66,8 +57,7 @@ public class BlueskyClient : IBlueskyClient
         _identifier = identifier;
         _password = password;
         _logger = logger;
-        _fileTypeHelper = new FileTypeHelper(logger);
-        _languages = languages?.ToImmutableList() ?? ImmutableList<string>.Empty;
+        _languages = languages.ToImmutableList();
     }
 
     /// <summary>
@@ -94,8 +84,15 @@ public class BlueskyClient : IBlueskyClient
     {
     }
 
-    private async Task CreatePost(Session session, string text, Uri? url)
+    private async Task CreatePost(string text, Uri? url)
     {
+        var session = await Authorize(_identifier, _password);
+
+        if (session == null)
+        {
+            throw new AuthenticationException();
+        }
+
         // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
         var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
@@ -110,9 +107,11 @@ public class BlueskyClient : IBlueskyClient
 
         if (url != null)
         {
+            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, _logger);
+
             post.Embed = new Embed
             {
-                External = await CreateEmbedCardAsync(url, session.AccessJwt),
+                External = await embedCardBuilder.Create(url, session.AccessJwt),
                 Type = "app.bsky.embed.external"
             };
         }
@@ -142,31 +141,33 @@ public class BlueskyClient : IBlueskyClient
 
         var response = await httpClient.PostAsync(requestUri, content);
 
-        var ensureSuccessStatusCode = response.EnsureSuccessStatusCode();
-
         // This throws an exception if the HTTP response status is an error code.
+        response.EnsureSuccessStatusCode();
     }
-
-    public async Task Post(string text, Uri? uri)
-    {
-        var session = await Authorize(_identifier, _password);
-
-        if (session == null)
-        {
-            throw new AuthenticationException();
-        }
-
-        await CreatePost(session, text, uri);
-    }
-
-    public Task Post(string text) => Post(text, null);
+    
+    /// <summary>
+    /// Create post
+    /// </summary>
+    /// <param name="text">Post text</param>
+    /// <returns></returns>
+    public Task Post(string text) => CreatePost(text, null);
 
     /// <summary>
-    /// 
+    /// Create post with attached link
     /// </summary>
-    /// <param name="identifier">Account identifier</param>
-    /// <param name="password">App password</param>
+    /// <param name="text">Post text</param>
+    /// <param name="uri">Link to webpage</param>
     /// <returns></returns>
+    public Task Post(string text, Uri uri) => CreatePost(text, uri);
+
+    /// <summary>
+    /// Authorize in Bluesky
+    /// </summary>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    /// <returns>
+    /// Instance of authorized session
+    /// </returns>
     public async Task<Session?> Authorize(string identifier, string password)
     {
         var requestData = new
@@ -189,76 +190,5 @@ public class BlueskyClient : IBlueskyClient
         var jsonResponse = await response.Content.ReadAsStringAsync();
 
         return JsonConvert.DeserializeObject<Session>(jsonResponse);
-    }
-
-    private async Task<EmbedCard> CreateEmbedCardAsync(Uri url, string accessToken)
-    {
-        var extractor = new Web.MetaExtractor.Extractor();
-        var metadata = await extractor.ExtractAsync(url);
-
-        var card = new EmbedCard
-        {
-            Uri = url.ToString(),
-            Title = metadata.Title,
-            Description = metadata.Description
-        };
-
-        if (metadata.Images != null && metadata.Images.Any())
-        {
-            var imgUrl = metadata.Images.FirstOrDefault();
-
-            if (!string.IsNullOrWhiteSpace(imgUrl))
-            {
-                if (!imgUrl.Contains("://"))
-                {
-                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(url, imgUrl), accessToken);
-                }
-                else
-                {
-                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(imgUrl), accessToken);    
-                }
-            }
-        }
-
-        return card;
-    }
-
-    private async Task<Thumb?> UploadImageAndSetThumbAsync(Uri imageUrl, string accessToken)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
-
-        var imgResp = await httpClient.GetAsync(imageUrl);
-        imgResp.EnsureSuccessStatusCode();
-
-        var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(imageUrl);
-
-        var imageContent = new StreamContent(await imgResp.Content.ReadAsStreamAsync());
-        imageContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
-
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
-        {
-            Content = imageContent,
-        };
-
-        // Add the Authorization header with the access token to the request message
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await httpClient.SendAsync(request);
-
-        response.EnsureSuccessStatusCode();
-
-        var json = await response.Content.ReadAsStringAsync();
-        var blob = JsonConvert.DeserializeObject<BlobResponse>(json);
-
-        var card = blob?.Blob;
-
-        if (card != null)
-        {
-            // ToDo: fix it
-            // This is hack for fix problem when Type is empty after deserialization
-            card.Type = "blob"; 
-        }
-
-        return card;
     }
 }
