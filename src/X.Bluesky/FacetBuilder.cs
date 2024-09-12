@@ -1,130 +1,107 @@
+using System.Text.RegularExpressions;
 using X.Bluesky.Models;
 
 namespace X.Bluesky;
 
 public class FacetBuilder
 {
-    public FacetFeature? Create(string text)
+    public IReadOnlyCollection<Facet> Create(string text)
     {
-        FacetFeature? facetFeature = null;
+        var result = new List<Facet>();
+        // FacetFeature? facetFeature = null;
 
-        if (IsFacetFeatureLink(text))
+        var featureLinkMatches = GetFeatureLinkMatches(text);
+        var featureMentionMatches = GetFeatureMentionMatches(text);
+        var featureTagMatches = GetFeatureTagMatches(text);
+
+        foreach (var match in featureLinkMatches)
         {
-            facetFeature = CreateFacetFeatureLink();
+            result.Add(new Facet
+            {
+                Index = new FacetIndex
+                {
+                    ByteStart = match.Index,
+                    ByteEnd = match.Index + match.Length
+                },
+                Features =
+                [
+                    new FacetFeatureLink { Uri = new Uri(match.Value) }
+                ]
+            });
         }
-        else if (IsFacetFeatureMention(text))
+
+        foreach (var match in featureMentionMatches)
         {
-            facetFeature = CreateFacetFeatureMention();
+            result.Add(new Facet
+            {
+                Index = new FacetIndex
+                {
+                    ByteStart = match.Index,
+                    ByteEnd = match.Index + match.Length
+                },
+                Features =
+                [
+                    new FacetFeatureMention { Did = match.Value }
+                ]
+            });
         }
-        else if (IsFacetFeatureTag(text))
+
+        foreach (var match in featureTagMatches)
         {
-            facetFeature = CreateFacetFeatureTag();
+            result.Add(new Facet
+            {
+                Index = new FacetIndex
+                {
+                    ByteStart = match.Index,
+                    ByteEnd = match.Index + match.Length
+                },
+                Features =
+                [
+                    new FacetFeatureTag { Tag = match.Value }
+                ]
+            });
         }
 
-        return facetFeature;
+        return result;
     }
 
-    private bool IsFacetFeatureTag(string text)
+    /// <summary>
+    /// Detect hashtags
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
     {
-        throw new NotImplementedException();
+        var regex = new Regex(@"#\w+");
+        var matches = regex.Matches(text).ToList();
+
+        return matches;
+
     }
 
-    private bool IsFacetFeatureMention(string text)
+    /// <summary>
+    /// Detect mentions
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
     {
-        throw new NotImplementedException();
+        var regex = new Regex(@"@\w+");
+        var matches = regex.Matches(text).ToList();
+
+        return matches;
     }
 
-    private bool IsFacetFeatureLink(string text)
+    /// <summary>
+    /// Detect tags
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
     {
-        throw new NotImplementedException();
-    }
+        var regex = new Regex(@"https?:\/\/[^\s]+");
+        var matches = regex.Matches(text).ToList();
 
-    private static FacetFeatureTag CreateFacetFeatureTag()
-    {
-        return new FacetFeatureTag();
+        return matches;
     }
-
-    private static FacetFeatureMention CreateFacetFeatureMention()
-    {
-        return new FacetFeatureMention();
-    }
-
-    private static FacetFeatureLink CreateFacetFeatureLink()
-    {
-        return new FacetFeatureLink();
-    }
-    
-    // public static List<Facet> DetectFacets(string text)
-    // {
-    //     var facets = new List<Facet>();
-    //
-    //     // Detect links (http/https URLs)
-    //     var linkRegex = new Regex(@"https?:\/\/[^\s]+");
-    //     foreach (Match match in linkRegex.Matches(text))
-    //     {
-    //         facets.Add(new Facet
-    //         {
-    //             Index = new Index
-    //             {
-    //                 ByteStart = match.Index,
-    //                 ByteEnd = match.Index + match.Length
-    //             },
-    //             Features = new List<Feature>
-    //             {
-    //                 new Feature
-    //                 {
-    //                     Type = "app.bsky.richtext.facet#link",
-    //                     Uri = match.Value
-    //                 }
-    //             }
-    //         });
-    //     }
-    //
-    //     // Detect hashtags (#tag)
-    //     var tagRegex = new Regex(@"#\w+");
-    //     foreach (Match match in tagRegex.Matches(text))
-    //     {
-    //         facets.Add(new Facet
-    //         {
-    //             Index = new Index
-    //             {
-    //                 ByteStart = match.Index,
-    //                 ByteEnd = match.Index + match.Length
-    //             },
-    //             Features = new List<Feature>
-    //             {
-    //                 new Feature
-    //                 {
-    //                     Type = "app.bsky.richtext.facet#tag",
-    //                     Tag = match.Value
-    //                 }
-    //             }
-    //         });
-    //     }
-    //
-    //     // Detect mentions (@username)
-    //     var mentionRegex = new Regex(@"@\w+");
-    //     foreach (Match match in mentionRegex.Matches(text))
-    //     {
-    //         facets.Add(new Facet
-    //         {
-    //             Index = new Index
-    //             {
-    //                 ByteStart = match.Index,
-    //                 ByteEnd = match.Index + match.Length
-    //             },
-    //             Features = new List<Feature>
-    //             {
-    //                 new Feature
-    //                 {
-    //                     Type = "app.bsky.richtext.facet#mention",
-    //                     Did = match.Value
-    //                 }
-    //             }
-    //         });
-    //     }
-    //
-    //     return facets;
-    // }
 }
-
