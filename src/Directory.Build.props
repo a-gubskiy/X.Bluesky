@@ -1,0 +1,24 @@
+<Project>
+
+    <PropertyGroup>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+        <PackageIcon>x.png</PackageIcon>
+
+        <Authors>Andrew Gubskiy</Authors>
+        <Copyright>Andrew Gubskiy © 2024</Copyright>
+        <Company>Ukrainian .NET Developer Community</Company>
+
+        <Version>1.1.0</Version>
+        <AssemblyVersion>1.1.0</AssemblyVersion>
+        <FileVersion>1.1.0</FileVersion>
+        <PackageVersion>1.1.0</PackageVersion>
+
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/ernado-x/X.Bluesky.git</RepositoryUrl>
+        <PackageProjectUrl>https://andrew.gubskiy.com/open-source</PackageProjectUrl>
+    </PropertyGroup>
+
+</Project>

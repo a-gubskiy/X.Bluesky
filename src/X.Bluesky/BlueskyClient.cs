@@ -20,21 +20,15 @@ public interface IBlueskyClient
     /// <param name="text"></param>
     /// <returns></returns>
     Task Post(string text);
-
-    /// <summary>
-    /// Make post with link (page preview will be attached)
-    /// </summary>
-    /// <param name="text"></param>
-    /// <param name="uri"></param>
-    /// <returns></returns>
+    
     Task Post(string text, Uri uri);
 }
 
 public class BlueskyClient : IBlueskyClient
 {
-    private readonly string _identifier;
-    private readonly string _password;
     private readonly ILogger _logger;
+    private readonly IAuthorizationClient _authorizationClient;
+    private readonly IMentionResolver _mentionResolver;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IReadOnlyCollection<string> _languages;
 
@@ -54,10 +48,10 @@ public class BlueskyClient : IBlueskyClient
         ILogger<BlueskyClient> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _identifier = identifier;
-        _password = password;
+        _authorizationClient = new AuthorizationClient(httpClientFactory, identifier, password);
         _logger = logger;
         _languages = languages.ToImmutableList();
+        _mentionResolver = new MentionResolver(_httpClientFactory);
     }
 
     /// <summary>
@@ -80,13 +74,29 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="identifier">Bluesky identifier</param>
     /// <param name="password">Bluesky application password</param>
     public BlueskyClient(string identifier, string password)
-        : this(new HttpClientFactory(), identifier, password)
+        : this(new BlueskyHttpClientFactory(), identifier, password)
     {
     }
 
+    /// <summary>
+    /// Create post
+    /// </summary>
+    /// <param name="text">Post text</param>
+    /// <returns></returns>
+    public Task Post(string text) => CreatePost(text, null);
+    
+    public Task Post(string text, Uri uri) => CreatePost(text, uri);
+
+
+    /// <summary>
+    /// Create post
+    /// </summary>
+    /// <param name="text">Post text</param>
+    /// <param name="url"></param>
+    /// <returns></returns>
     private async Task CreatePost(string text, Uri? url)
     {
-        var session = await Authorize(_identifier, _password);
+        var session = await _authorizationClient.GetSession();
 
         if (session == null)
         {
@@ -95,6 +105,22 @@ public class BlueskyClient : IBlueskyClient
 
         // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
         var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var facetBuilder = new FacetBuilder();
+
+        var facets = facetBuilder.GetFacets(text);
+
+        foreach (var facet in facets)
+        {
+            foreach (var facetFeature in facet.Features)
+            {
+                if (facetFeature is FacetFeatureMention facetFeatureMention)
+                {
+                    var resolveDid = await _mentionResolver.ResolveMention(facetFeatureMention.Did);
+
+                    facetFeatureMention.ResolveDid(resolveDid);
+                }
+            }
+        }
 
         // Required fields for the post
         var post = new Post
@@ -102,16 +128,28 @@ public class BlueskyClient : IBlueskyClient
             Type = "app.bsky.feed.post",
             Text = text,
             CreatedAt = now,
-            Langs = _languages.ToList()
+            Langs = _languages.ToList(),
+            Facets = facets.ToList()
         };
+
+        if (url == null)
+        {
+            //If no link was defined we're trying to get link from facets 
+            url = facets
+                .SelectMany(facet => facet.Features)
+                .Where(feature => feature is FacetFeatureLink)
+                .Cast<FacetFeatureLink>()
+                .Select(f => f.Uri)
+                .FirstOrDefault();
+        }
 
         if (url != null)
         {
-            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, _logger);
+            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
 
             post.Embed = new Embed
             {
-                External = await embedCardBuilder.Create(url, session.AccessJwt),
+                External = await embedCardBuilder.GetEmbedCard(url),
                 Type = "app.bsky.embed.external"
             };
         }
@@ -122,7 +160,7 @@ public class BlueskyClient : IBlueskyClient
         {
             Repo = session.Did,
             Collection = "app.bsky.feed.post",
-            Record = post
+            Record = post,
         };
 
         var jsonRequest = JsonConvert.SerializeObject(requestData, Formatting.Indented, new JsonSerializerSettings
@@ -141,54 +179,14 @@ public class BlueskyClient : IBlueskyClient
 
         var response = await httpClient.PostAsync(requestUri, content);
 
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            _logger.LogError(responseContent);
+        }
+
         // This throws an exception if the HTTP response status is an error code.
         response.EnsureSuccessStatusCode();
-    }
-    
-    /// <summary>
-    /// Create post
-    /// </summary>
-    /// <param name="text">Post text</param>
-    /// <returns></returns>
-    public Task Post(string text) => CreatePost(text, null);
-
-    /// <summary>
-    /// Create post with attached link
-    /// </summary>
-    /// <param name="text">Post text</param>
-    /// <param name="uri">Link to webpage</param>
-    /// <returns></returns>
-    public Task Post(string text, Uri uri) => CreatePost(text, uri);
-
-    /// <summary>
-    /// Authorize in Bluesky
-    /// </summary>
-    /// <param name="identifier">Bluesky identifier</param>
-    /// <param name="password">Bluesky application password</param>
-    /// <returns>
-    /// Instance of authorized session
-    /// </returns>
-    public async Task<Session?> Authorize(string identifier, string password)
-    {
-        var requestData = new
-        {
-            identifier = identifier,
-            password = password
-        };
-
-        var json = JsonConvert.SerializeObject(requestData);
-
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var httpClient = _httpClientFactory.CreateClient();
-
-        var uri = "https://bsky.social/xrpc/com.atproto.server.createSession";
-        var response = await httpClient.PostAsync(uri, content);
-
-        response.EnsureSuccessStatusCode();
-
-        var jsonResponse = await response.Content.ReadAsStringAsync();
-
-        return JsonConvert.DeserializeObject<Session>(jsonResponse);
     }
 }
