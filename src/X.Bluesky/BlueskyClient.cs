@@ -2,12 +2,10 @@
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
-using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using X.Bluesky.Models;
 
@@ -101,7 +99,7 @@ public class BlueskyClient : IBlueskyClient
         var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
         var facetBuilder = new FacetBuilder();
 
-        var facets = facetBuilder.Create(text);
+        var facets = facetBuilder.GetFacets(text);
 
         foreach (var facet in facets)
         {

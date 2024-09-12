@@ -8,7 +8,12 @@ namespace X.Bluesky;
 /// </summary>
 public class FacetBuilder
 {
-    public IReadOnlyCollection<Facet> Create(string text)
+    /// <summary>
+    /// Get facets from the text
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public IReadOnlyCollection<Facet> GetFacets(string text)
     {
         var result = new List<Facet>();
 

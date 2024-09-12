@@ -9,6 +9,9 @@ public interface IMentionResolver
     Task<string> ResolveMention(string mention);
 }
 
+/// <summary>
+/// Resolve mention to DID format
+/// </summary>
 public class MentionResolver : IMentionResolver
 {
     private readonly IHttpClientFactory _httpClientFactory;

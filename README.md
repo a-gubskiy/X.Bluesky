@@ -8,9 +8,10 @@ By leveraging the Bluesky API, this project allows for straightforward integrati
 
 ## Features
 
-- Post messages directly to Bluesky.
-- Attach links to posts, allowing for page previews within the Bluesky feed.
-- Authenticate with Bluesky using an identifier and password.
+- Post messages directly to Bluesky
+- Attach links to posts, allowing for page previews within the Bluesky feed
+- Authenticate with Bluesky using an identifier and password
+- Automatically generate tags, mentions and url cards 
 
 ## Getting Started
 

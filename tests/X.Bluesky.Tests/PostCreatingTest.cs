@@ -14,7 +14,7 @@ public class PostCreatingTest
         //var text = "This is a test and this is a #tag and https://example.com link and metions @one and @two in the end of text";
         var text = $"Hello world! This post contains #devdigest and #microsoft also it include https://devdigest.today which is in middle of post text and @andrew.gubskiy.com mention";
         
-        var facets = facetBuilder.Create(text);
+        var facets = facetBuilder.GetFacets(text);
 
         Assert.Equal(4, facets.Count);
     }
@@ -40,7 +40,7 @@ public class PostCreatingTest
 
         var text = "This is a test and this is a no link and no metions in the end of text";
         
-        var facets = facetBuilder.Create(text);
+        var facets = facetBuilder.GetFacets(text);
 
         Assert.Empty(facets);
     }
