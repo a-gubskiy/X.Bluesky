@@ -124,13 +124,25 @@ public class BlueskyClient : IBlueskyClient
             Facets = facets.ToList()
         };
 
+        if (url == null)
+        {
+            //If no link was defined we're trying to get link from facets 
+            var facetFeatureLink = facets
+                .SelectMany(facet => facet.Features)
+                .Where(feature => feature is FacetFeatureLink)
+                .Cast<FacetFeatureLink>()
+                .FirstOrDefault();
+
+            url = facetFeatureLink?.Uri;
+        }
+
         if (url != null)
         {
-            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, _logger);
+            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session.AccessJwt, _logger);
 
             post.Embed = new Embed
             {
-                External = await embedCardBuilder.Create(url, session.AccessJwt),
+                External = await embedCardBuilder.Create(url),
                 Type = "app.bsky.embed.external"
             };
         }

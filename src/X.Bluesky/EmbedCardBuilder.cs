@@ -10,11 +10,13 @@ public class EmbedCardBuilder
     private readonly ILogger _logger;
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
-    
-    public EmbedCardBuilder(IHttpClientFactory httpClientFactory, ILogger logger)
+    private readonly string _accessToken;
+
+    public EmbedCardBuilder(IHttpClientFactory httpClientFactory, string accessToken, ILogger logger)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _accessToken = accessToken;
         _fileTypeHelper = new FileTypeHelper(logger);
     }
     
@@ -24,7 +26,7 @@ public class EmbedCardBuilder
     /// <param name="url"></param>
     /// <param name="accessToken"></param>
     /// <returns></returns>
-    public async Task<EmbedCard> Create(Uri url, string accessToken)
+    public async Task<EmbedCard> Create(Uri url)
     {
         var extractor = new Web.MetaExtractor.Extractor();
         var metadata = await extractor.ExtractAsync(url);
@@ -44,11 +46,11 @@ public class EmbedCardBuilder
             {
                 if (!imgUrl.Contains("://"))
                 {
-                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(url, imgUrl), accessToken);
+                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(url, imgUrl));
                 }
                 else
                 {
-                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(imgUrl), accessToken);    
+                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(imgUrl));    
                 }
                 
                 _logger.LogInformation("EmbedCard created");
@@ -58,7 +60,7 @@ public class EmbedCardBuilder
         return card;
     }
 
-    private async Task<Thumb?> UploadImageAndSetThumbAsync(Uri imageUrl, string accessToken)
+    private async Task<Thumb?> UploadImageAndSetThumbAsync(Uri imageUrl)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -76,7 +78,7 @@ public class EmbedCardBuilder
         };
 
         // Add the Authorization header with the access token to the request message
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
 
         var response = await httpClient.SendAsync(request);
 

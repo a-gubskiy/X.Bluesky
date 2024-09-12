@@ -9,8 +9,8 @@ public class BlueskyIntegrationTest
     [Fact]
     public async Task CheckSending()
     {
-        var identifier = "devdigest.bsky.social";
-        var password = "{password-here}";
+        var identifier = "devdigest.today";
+        var password = "";
         
         IBlueskyClient client = new BlueskyClient(identifier, password);
 
