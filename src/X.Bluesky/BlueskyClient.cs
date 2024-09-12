@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using X.Bluesky.Models;
 
@@ -36,6 +37,7 @@ public class BlueskyClient : IBlueskyClient
     private readonly string _identifier;
     private readonly string _password;
     private readonly ILogger _logger;
+    private readonly IMentionResolver _mentionResolver;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IReadOnlyCollection<string> _languages;
 
@@ -59,6 +61,7 @@ public class BlueskyClient : IBlueskyClient
         _password = password;
         _logger = logger;
         _languages = languages.ToImmutableList();
+        _mentionResolver = new MentionResolver(_httpClientFactory);
     }
 
     /// <summary>
@@ -99,6 +102,19 @@ public class BlueskyClient : IBlueskyClient
         var facetBuilder = new FacetBuilder();
 
         var facets = facetBuilder.Create(text);
+
+        foreach (var facet in facets)
+        {
+            foreach (var facetFeature in facet.Features)
+            {
+                if (facetFeature is FacetFeatureMention facetFeatureMention)
+                {
+                    var resolveDid = await _mentionResolver.ResolveMention(facetFeatureMention.Did);
+                    
+                    facetFeatureMention.ResolveDid(resolveDid);
+                }
+            }
+        }
 
         // Required fields for the post
         var post = new Post
@@ -146,10 +162,16 @@ public class BlueskyClient : IBlueskyClient
 
         var response = await httpClient.PostAsync(requestUri, content);
 
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            _logger.LogError(responseContent);
+        }
+
         // This throws an exception if the HTTP response status is an error code.
         response.EnsureSuccessStatusCode();
     }
-
 
     /// <summary>
     /// Create post

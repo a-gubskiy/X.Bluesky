@@ -82,7 +82,8 @@ public class FacetBuilder
     /// <returns></returns>
     public IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
     {
-        var regex = new Regex(@"@\w+");
+        // var regex = new Regex(@"@\w+");
+        var regex = new Regex(@"@\w+(\.\w+)*");
         var matches = regex.Matches(text).ToList();
 
         return matches;
