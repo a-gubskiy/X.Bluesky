@@ -1,9 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using X.Bluesky;
 using Xunit;
 
-namespace Tests;
+namespace X.Bluesky.Tests;
 
 public class BlueskyIntegrationTest
 {
