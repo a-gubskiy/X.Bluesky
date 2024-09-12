@@ -32,7 +32,8 @@ var password = "your-password-here";
 
 IBlueskyClient client = new BlueskyClient(identifier, password);
 
-var link = new Uri("https://yourlink.com/post/123");
+await client.Post($"Read this post from #devdigest: https://yourlink.com/post/123");
 
-await client.Post("Hello world!", link);
+await client.Post($"Read this post!", new Uri("https://yourlink.com/post/123");
 ```
+
