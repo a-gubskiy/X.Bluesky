@@ -16,6 +16,16 @@ public class MentionResolver : IMentionResolver
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger _logger;
+    
+    public MentionResolver()
+        : this(new BlueskyHttpClientFactory(), new NullLogger<MentionResolver>())
+    {
+    }
+    
+    public MentionResolver(IHttpClientFactory httpClientFactory)
+        : this(httpClientFactory, new NullLogger<MentionResolver>())
+    {
+    }
 
     public MentionResolver(IHttpClientFactory httpClientFactory, ILogger logger)
     {
@@ -25,11 +35,6 @@ public class MentionResolver : IMentionResolver
 
     public MentionResolver(IHttpClientFactory httpClientFactory, ILogger<MentionResolver> logger)
         : this(httpClientFactory, (ILogger)logger)
-    {
-    }
-
-    public MentionResolver(IHttpClientFactory httpClientFactory)
-        : this(httpClientFactory, new NullLogger<MentionResolver>())
     {
     }
 

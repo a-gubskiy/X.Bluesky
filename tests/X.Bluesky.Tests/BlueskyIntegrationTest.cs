@@ -39,7 +39,7 @@ public class BlueskyIntegrationTest
     public async Task TestResolveMention()
     {
         var mention = "@andrew.gubskiy.com";
-        var httpClientFactory = new HttpClientFactory();
+        var httpClientFactory = new BlueskyHttpClientFactory();
         
         IMentionResolver mentionResolver = new MentionResolver(httpClientFactory);
         

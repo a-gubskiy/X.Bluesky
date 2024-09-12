@@ -24,9 +24,8 @@ public class EmbedCardBuilder
     /// Create embed card
     /// </summary>
     /// <param name="url"></param>
-    /// <param name="accessToken"></param>
     /// <returns></returns>
-    public async Task<EmbedCard> Create(Uri url)
+    public async Task<EmbedCard> GetEmbedCard(Uri url)
     {
         var extractor = new Web.MetaExtractor.Extractor();
         var metadata = await extractor.ExtractAsync(url);

@@ -134,7 +134,7 @@ public class BlueskyClient : IBlueskyClient
 
             post.Embed = new Embed
             {
-                External = await embedCardBuilder.Create(url),
+                External = await embedCardBuilder.GetEmbedCard(url),
                 Type = "app.bsky.embed.external"
             };
         }
