@@ -138,7 +138,7 @@ public class BlueskyClient : IBlueskyClient
 
         if (url != null)
         {
-            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session.AccessJwt, _logger);
+            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
 
             post.Embed = new Embed
             {

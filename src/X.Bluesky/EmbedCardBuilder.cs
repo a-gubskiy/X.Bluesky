@@ -10,13 +10,13 @@ public class EmbedCardBuilder
     private readonly ILogger _logger;
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _accessToken;
+    private readonly Session _session;
 
-    public EmbedCardBuilder(IHttpClientFactory httpClientFactory, string accessToken, ILogger logger)
+    public EmbedCardBuilder(IHttpClientFactory httpClientFactory, Session session, ILogger logger)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
-        _accessToken = accessToken;
+        _session = session;
         _fileTypeHelper = new FileTypeHelper(logger);
     }
     
@@ -78,7 +78,7 @@ public class EmbedCardBuilder
         };
 
         // Add the Authorization header with the access token to the request message
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _session.AccessJwt);
 
         var response = await httpClient.SendAsync(request);
 
