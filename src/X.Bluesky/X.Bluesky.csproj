@@ -5,7 +5,7 @@
         <Description>Simple client for posting to Bluesky</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <PackageTags>bluesky, social networks</PackageTags>        
+        <PackageTags>bluesky, social networks</PackageTags>
         <TargetFrameworks>net8.0;net6.0;netstandard2.1</TargetFrameworks>
         <LangVersion>default</LangVersion>
     </PropertyGroup>
@@ -14,7 +14,7 @@
         <PackageReference Include="JetBrains.Annotations" Version="2024.2.0" PrivateAssets="all"/>
         <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-        <PackageReference Include="X.Web.MetaExtractor" Version="2.0.4" />
+        <PackageReference Include="X.Web.MetaExtractor" Version="2.0.4"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -24,6 +24,10 @@
     <ItemGroup>
         <None Include="../../README.md" Pack="true" PackagePath="\"/>
         <None Include="../../LICENSE.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../../x.png" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>
