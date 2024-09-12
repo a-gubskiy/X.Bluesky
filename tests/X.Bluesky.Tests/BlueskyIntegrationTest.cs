@@ -11,11 +11,10 @@ public class BlueskyIntegrationTest
     {
         var identifier = "321";
         var password = "1234";
-        
-        IBlueskyClient client = new BlueskyClient();
 
-        var session = await client.Authorize(identifier, password);
+        var authorizationClient = new AuthorizationClient(identifier, password);
 
+        var session = await authorizationClient.GetSession();
 
         Assert.NotNull(session);
     }

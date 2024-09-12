@@ -20,15 +20,12 @@ public interface IBlueskyClient
     /// <param name="text"></param>
     /// <returns></returns>
     Task Post(string text);
-
-    Task<Session> Authorize(string identifier, string password);
 }
 
 public class BlueskyClient : IBlueskyClient
 {
-    private readonly string _identifier;
-    private readonly string _password;
     private readonly ILogger _logger;
+    private readonly IAuthorizationClient _authorizationClient;
     private readonly IMentionResolver _mentionResolver;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IReadOnlyCollection<string> _languages;
@@ -49,8 +46,7 @@ public class BlueskyClient : IBlueskyClient
         ILogger<BlueskyClient> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _identifier = identifier;
-        _password = password;
+        _authorizationClient = new AuthorizationClient(httpClientFactory, identifier, password);
         _logger = logger;
         _languages = languages.ToImmutableList();
         _mentionResolver = new MentionResolver(_httpClientFactory);
@@ -76,15 +72,10 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="identifier">Bluesky identifier</param>
     /// <param name="password">Bluesky application password</param>
     public BlueskyClient(string identifier, string password)
-        : this(new HttpClientFactory(), identifier, password)
+        : this(new BlueskyHttpClientFactory(), identifier, password)
     {
     }
-
-    public BlueskyClient()
-        : this(new HttpClientFactory(), "", "")
-    {
-    }
-
+    
     /// <summary>
     /// Create post
     /// </summary>
@@ -92,7 +83,7 @@ public class BlueskyClient : IBlueskyClient
     /// <returns></returns>
     public async Task Post(string text)
     {
-        var session = await Authorize(_identifier, _password);
+        var session = await _authorizationClient.GetSession();
 
         if (session == null)
         {
@@ -130,13 +121,12 @@ public class BlueskyClient : IBlueskyClient
 
 
         //If no link was defined we're trying to get link from facets 
-        var facetFeatureLink = facets
+        var url = facets
             .SelectMany(facet => facet.Features)
             .Where(feature => feature is FacetFeatureLink)
             .Cast<FacetFeatureLink>()
+            .Select(f => f.Uri)
             .FirstOrDefault();
-
-        var url = facetFeatureLink?.Uri;
 
         if (url != null)
         {
@@ -183,37 +173,5 @@ public class BlueskyClient : IBlueskyClient
 
         // This throws an exception if the HTTP response status is an error code.
         response.EnsureSuccessStatusCode();
-    }
-
-    /// <summary>
-    /// Authorize in Bluesky
-    /// </summary>
-    /// <param name="identifier">Bluesky identifier</param>
-    /// <param name="password">Bluesky application password</param>
-    /// <returns>
-    /// Instance of authorized session
-    /// </returns>
-    public async Task<Session> Authorize(string identifier, string password)
-    {
-        var requestData = new
-        {
-            identifier = identifier,
-            password = password
-        };
-
-        var json = JsonConvert.SerializeObject(requestData);
-
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var httpClient = _httpClientFactory.CreateClient();
-
-        var uri = "https://bsky.social/xrpc/com.atproto.server.createSession";
-        var response = await httpClient.PostAsync(uri, content);
-
-        response.EnsureSuccessStatusCode();
-
-        var jsonResponse = await response.Content.ReadAsStringAsync();
-
-        return JsonConvert.DeserializeObject<Session>(jsonResponse);
     }
 }
