@@ -3,6 +3,9 @@ using X.Bluesky.Models;
 
 namespace X.Bluesky;
 
+/// <summary>
+/// 
+/// </summary>
 public class FacetBuilder
 {
     public IReadOnlyCollection<Facet> Create(string text)
@@ -33,14 +36,15 @@ public class FacetBuilder
         {
             var start = match.Index;
             var end = start + match.Length;
-
-            result.Add(CreateFacet(start, end, new FacetFeatureTag { Tag = match.Value }));
+            var tag = match.Value.Replace("#", string.Empty);
+            
+            result.Add(CreateFacet(start, end, new FacetFeatureTag { Tag = tag }));
         }
 
         return result;
     }
 
-    private Facet CreateFacet(int start, int end, FacetFeature facetFeature)
+    public Facet CreateFacet(int start, int end, FacetFeature facetFeature)
     {
         var result = new Facet
         {
@@ -63,7 +67,7 @@ public class FacetBuilder
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    private IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
+    public IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
     {
         var regex = new Regex(@"#\w+");
         var matches = regex.Matches(text).ToList();
@@ -76,7 +80,7 @@ public class FacetBuilder
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    private IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
+    public IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
     {
         var regex = new Regex(@"@\w+");
         var matches = regex.Matches(text).ToList();
@@ -89,7 +93,7 @@ public class FacetBuilder
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    private IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
+    public IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
     {
         var regex = new Regex(@"https?:\/\/[^\s]+");
         var matches = regex.Matches(text).ToList();

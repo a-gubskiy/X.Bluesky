@@ -98,7 +98,7 @@ public class BlueskyClient : IBlueskyClient
         var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
         var facetBuilder = new FacetBuilder();
 
-        var facets = facetBuilder.Create(text).ToList();
+        var facets = facetBuilder.Create(text);
 
         // Required fields for the post
         var post = new Post
@@ -107,7 +107,7 @@ public class BlueskyClient : IBlueskyClient
             Text = text,
             CreatedAt = now,
             Langs = _languages.ToList(),
-            Facets = facets
+            Facets = facets.ToList()
         };
 
         if (url != null)
