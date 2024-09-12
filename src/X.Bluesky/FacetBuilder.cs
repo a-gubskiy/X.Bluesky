@@ -8,7 +8,6 @@ public class FacetBuilder
     public IReadOnlyCollection<Facet> Create(string text)
     {
         var result = new List<Facet>();
-        // FacetFeature? facetFeature = null;
 
         var featureLinkMatches = GetFeatureLinkMatches(text);
         var featureMentionMatches = GetFeatureMentionMatches(text);
@@ -16,51 +15,45 @@ public class FacetBuilder
 
         foreach (var match in featureLinkMatches)
         {
-            result.Add(new Facet
-            {
-                Index = new FacetIndex
-                {
-                    ByteStart = match.Index,
-                    ByteEnd = match.Index + match.Length
-                },
-                Features =
-                [
-                    new FacetFeatureLink { Uri = new Uri(match.Value) }
-                ]
-            });
+            var start = match.Index;
+            var end = start + match.Length;
+
+            result.Add(CreateFacet(start, end, new FacetFeatureLink { Uri = new Uri(match.Value) }));
         }
 
         foreach (var match in featureMentionMatches)
         {
-            result.Add(new Facet
-            {
-                Index = new FacetIndex
-                {
-                    ByteStart = match.Index,
-                    ByteEnd = match.Index + match.Length
-                },
-                Features =
-                [
-                    new FacetFeatureMention { Did = match.Value }
-                ]
-            });
+            var start = match.Index;
+            var end = start + match.Length;
+
+            result.Add(CreateFacet(start, end, new FacetFeatureMention { Did = match.Value }));
         }
 
         foreach (var match in featureTagMatches)
         {
-            result.Add(new Facet
-            {
-                Index = new FacetIndex
-                {
-                    ByteStart = match.Index,
-                    ByteEnd = match.Index + match.Length
-                },
-                Features =
-                [
-                    new FacetFeatureTag { Tag = match.Value }
-                ]
-            });
+            var start = match.Index;
+            var end = start + match.Length;
+
+            result.Add(CreateFacet(start, end, new FacetFeatureTag { Tag = match.Value }));
         }
+
+        return result;
+    }
+
+    private Facet CreateFacet(int start, int end, FacetFeature facetFeature)
+    {
+        var result = new Facet
+        {
+            Index = new FacetIndex
+            {
+                ByteStart = start,
+                ByteEnd = end
+            },
+            Features =
+            [
+                facetFeature
+            ]
+        };
 
         return result;
     }
@@ -76,7 +69,6 @@ public class FacetBuilder
         var matches = regex.Matches(text).ToList();
 
         return matches;
-
     }
 
     /// <summary>
