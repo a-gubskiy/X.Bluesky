@@ -96,9 +96,9 @@ public class BlueskyClient : IBlueskyClient
 
         // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
         var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var facetBuilder = new FacetBuilder();
 
-
-        var facets = await GetFacets(text);
+        var facets = facetBuilder.Create(text).ToList();
 
         // Required fields for the post
         var post = new Post
@@ -107,7 +107,7 @@ public class BlueskyClient : IBlueskyClient
             Text = text,
             CreatedAt = now,
             Langs = _languages.ToList(),
-            Facets = facets 
+            Facets = facets
         };
 
         if (url != null)
@@ -150,55 +150,6 @@ public class BlueskyClient : IBlueskyClient
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<List<Facet>> GetFacets(string text)
-    {
-        const string pattern = "rb\"[$|\\W](@([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)\"";
-
-        var matches = Regex.Matches(text, pattern);
-
-        var facets = new List<Facet>();
-        var facetBuilder = new FacetBuilder();
-        
-        foreach (Match match in matches)
-        {
-            if (match.Success)
-            {
-                var facetFeature = facetBuilder.Create(match.Value);
-
-                if (facetFeature != null)
-                {
-
-
-                    facets.Add(new Facet
-                    {
-                        Index = new FacetIndex
-                        {
-                            ByteStart = 1,
-                            ByteEnd = 1
-                        },
-                        Features = [facetFeature]
-                    });
-                }
-            }
-        }
-        // {
-        //     text: 'Go to this site',
-        //     facets: [
-        //     {
-        //         index: {
-        //             byteStart: 6,
-        //             byteEnd: 15
-        //         },
-        //         features: [{
-        //             $type: 'app.bsky.richtext.facet#link',
-        //             uri: 'https://example.com'
-        //         }]
-        //     }
-        //     ]
-        // }
-
-        return facets;
-    }
 
     /// <summary>
     /// Create post
