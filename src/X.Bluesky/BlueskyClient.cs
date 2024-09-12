@@ -21,13 +21,7 @@ public interface IBlueskyClient
     /// <returns></returns>
     Task Post(string text);
 
-    /// <summary>
-    /// Make post with link (page preview will be attached)
-    /// </summary>
-    /// <param name="text"></param>
-    /// <param name="uri"></param>
-    /// <returns></returns>
-    Task Post(string text, Uri uri);
+    Task<Session> Authorize(string identifier, string password);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -86,7 +80,17 @@ public class BlueskyClient : IBlueskyClient
     {
     }
 
-    private async Task CreatePost(string text, Uri? url)
+    public BlueskyClient()
+        : this(new HttpClientFactory(), "", "")
+    {
+    }
+
+    /// <summary>
+    /// Create post
+    /// </summary>
+    /// <param name="text">Post text</param>
+    /// <returns></returns>
+    public async Task Post(string text)
     {
         var session = await Authorize(_identifier, _password);
 
@@ -108,7 +112,7 @@ public class BlueskyClient : IBlueskyClient
                 if (facetFeature is FacetFeatureMention facetFeatureMention)
                 {
                     var resolveDid = await _mentionResolver.ResolveMention(facetFeatureMention.Did);
-                    
+
                     facetFeatureMention.ResolveDid(resolveDid);
                 }
             }
@@ -124,17 +128,15 @@ public class BlueskyClient : IBlueskyClient
             Facets = facets.ToList()
         };
 
-        if (url == null)
-        {
-            //If no link was defined we're trying to get link from facets 
-            var facetFeatureLink = facets
-                .SelectMany(facet => facet.Features)
-                .Where(feature => feature is FacetFeatureLink)
-                .Cast<FacetFeatureLink>()
-                .FirstOrDefault();
 
-            url = facetFeatureLink?.Uri;
-        }
+        //If no link was defined we're trying to get link from facets 
+        var facetFeatureLink = facets
+            .SelectMany(facet => facet.Features)
+            .Where(feature => feature is FacetFeatureLink)
+            .Cast<FacetFeatureLink>()
+            .FirstOrDefault();
+
+        var url = facetFeatureLink?.Uri;
 
         if (url != null)
         {
@@ -184,21 +186,6 @@ public class BlueskyClient : IBlueskyClient
     }
 
     /// <summary>
-    /// Create post
-    /// </summary>
-    /// <param name="text">Post text</param>
-    /// <returns></returns>
-    public Task Post(string text) => CreatePost(text, null);
-
-    /// <summary>
-    /// Create post with attached link
-    /// </summary>
-    /// <param name="text">Post text</param>
-    /// <param name="uri">Link to webpage</param>
-    /// <returns></returns>
-    public Task Post(string text, Uri uri) => CreatePost(text, uri);
-
-    /// <summary>
     /// Authorize in Bluesky
     /// </summary>
     /// <param name="identifier">Bluesky identifier</param>
@@ -206,7 +193,7 @@ public class BlueskyClient : IBlueskyClient
     /// <returns>
     /// Instance of authorized session
     /// </returns>
-    public async Task<Session?> Authorize(string identifier, string password)
+    public async Task<Session> Authorize(string identifier, string password)
     {
         var requestData = new
         {

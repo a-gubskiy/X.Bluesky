@@ -7,6 +7,20 @@ namespace X.Bluesky.Tests;
 public class BlueskyIntegrationTest
 {
     [Fact]
+    public async Task CheckFailedAuth()
+    {
+        var identifier = "321";
+        var password = "1234";
+        
+        IBlueskyClient client = new BlueskyClient();
+
+        var session = await client.Authorize(identifier, password);
+
+
+        Assert.NotNull(session);
+    }
+    
+    [Fact]
     public async Task CheckSending()
     {
         var identifier = "devdigest.today";
@@ -17,7 +31,7 @@ public class BlueskyIntegrationTest
         var link = new Uri("https://devdigest.today/post/2431");
         var text = $"Hello world! This post contains #devdigest and #microsoft also it include {link} which is in middle of post text and @andrew.gubskiy.com mention";
         
-        await client.Post(text, link);
+        await client.Post(text);
         
         Assert.True(true);
     }
