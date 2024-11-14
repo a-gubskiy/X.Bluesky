@@ -10,7 +10,8 @@ public abstract record FacetFeature
 
 public record FacetFeatureLink : FacetFeature
 {
-    public Uri Uri { get; set; }
+    public Uri Uri { get; set; } = new Uri(string.Empty, UriKind.Relative);
+    
     public override string Type => "app.bsky.richtext.facet#link";
 }
 
@@ -58,7 +59,7 @@ public record FacetFeatureTag : FacetFeature
 {
     //tag: tag.replace(/^#/, ''),
 
-    public string Tag { get; set; }
+    public string Tag { get; set; } = "";
 
     public override string Type => "app.bsky.richtext.facet#tag";
 }
