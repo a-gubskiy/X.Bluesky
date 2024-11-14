@@ -7,7 +7,7 @@ namespace X.Bluesky.Tests;
 public class PostCreatingTest
 {
     [Fact]
-    public async Task CheckFacets_Exist()
+    public void CheckFacets_Exist()
     {
         var facetBuilder = new FacetBuilder();
 
@@ -20,7 +20,7 @@ public class PostCreatingTest
     }
     
     [Fact]
-    public async Task CheckFacetsMetion()
+    public void CheckFacetsMention()
     {
         var facetBuilder = new FacetBuilder();
 
@@ -34,7 +34,7 @@ public class PostCreatingTest
     }
     
     [Fact]
-    public async Task CheckFacets_Empty()
+    public void CheckFacets_Empty()
     {
         var facetBuilder = new FacetBuilder();
 
