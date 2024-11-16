@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text;
 using System.Text.RegularExpressions;
 using X.Bluesky.Models;
@@ -9,6 +10,20 @@ namespace X.Bluesky;
 /// </summary>
 public class FacetBuilder
 {
+    private readonly Regex _featureTagRegex;
+    private readonly Regex _featureMentionRegex;
+    private readonly Regex _featureLinkRegex;
+
+    /// <summary>
+    /// Create a new instance of FacetBuilder
+    /// </summary>
+    public FacetBuilder()
+    {
+        _featureTagRegex = new Regex(@"#\w+", RegexOptions.Compiled);
+        _featureMentionRegex = new Regex(@"@\w+(\.\w+)*", RegexOptions.Compiled);
+        _featureLinkRegex = new Regex(@"https?:\/\/[\S]+", RegexOptions.Compiled);
+    }
+
     /// <summary>
     /// Get facets from the text
     /// </summary>
@@ -43,7 +58,7 @@ public class FacetBuilder
             var start = GetUtf8BytePosition(text, match.Index);
             var end = GetUtf8BytePosition(text, match.Index + match.Length);
             var tag = match.Value.Replace("#", string.Empty);
-            
+
             result.Add(CreateFacet(start, end, new FacetFeatureTag { Tag = tag }));
         }
 
@@ -72,8 +87,7 @@ public class FacetBuilder
     /// <returns></returns>
     public IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
     {
-        var regex = new Regex(@"#\w+");
-        var matches = regex.Matches(text).ToList();
+        var matches = _featureTagRegex.Matches(text).ToFrozenSet();
 
         return matches;
     }
@@ -85,8 +99,7 @@ public class FacetBuilder
     /// <returns></returns>
     public IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
     {
-        var regex = new Regex(@"@\w+(\.\w+)*");
-        var matches = regex.Matches(text).ToList();
+        var matches = _featureMentionRegex.Matches(text).ToFrozenSet();
 
         return matches;
     }
@@ -98,8 +111,7 @@ public class FacetBuilder
     /// <returns></returns>
     public IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
     {
-        var regex = new Regex(@"https?:\/\/[\S]+", RegexOptions.Compiled);
-        var matches = regex.Matches(text).ToList();
+        var matches = _featureLinkRegex.Matches(text).ToFrozenSet();
 
         return matches;
     }
@@ -113,7 +125,7 @@ public class FacetBuilder
     private int GetUtf8BytePosition(string text, int index)
     {
         var substring = text[..index];
-        
+
         return Encoding.UTF8.GetByteCount(substring);
     }
 }
