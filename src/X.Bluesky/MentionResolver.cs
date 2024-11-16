@@ -80,7 +80,7 @@ public class MentionResolver : IMentionResolver
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError(responseContent);
+            _logger.LogError("Error: {ResponseContent}", responseContent);
 
             // Return null if unable to resolve
             return string.Empty;

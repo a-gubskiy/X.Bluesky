@@ -206,7 +206,7 @@ public class BlueskyClient : IBlueskyClient
         {
             var responseContent = await response.Content.ReadAsStringAsync();
 
-            _logger.LogError(responseContent);
+            _logger.LogError("Error: {ResponseContent}", responseContent);
         }
 
         // This throws an exception if the HTTP response status is an error code.
