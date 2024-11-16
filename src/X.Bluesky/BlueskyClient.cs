@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Frozen;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
@@ -33,7 +33,7 @@ public class BlueskyClient : IBlueskyClient
     private readonly IReadOnlyCollection<string> _languages;
 
     /// <summary>
-    /// 
+    /// Creates a new instance of the Bluesky client
     /// </summary>
     /// <param name="httpClientFactory"></param>
     /// <param name="identifier">Bluesky identifier</param>
@@ -47,15 +47,15 @@ public class BlueskyClient : IBlueskyClient
         IEnumerable<string> languages,
         ILogger<BlueskyClient> logger)
     {
-        _httpClientFactory = httpClientFactory;
-        _authorizationClient = new AuthorizationClient(httpClientFactory, identifier, password);
         _logger = logger;
-        _languages = languages.ToImmutableList();
+        _httpClientFactory = httpClientFactory;
+        _languages = languages.ToFrozenSet();
         _mentionResolver = new MentionResolver(_httpClientFactory);
+        _authorizationClient = new AuthorizationClient(httpClientFactory, identifier, password);
     }
 
     /// <summary>
-    /// 
+    /// Creates a new instance of the Bluesky client
     /// </summary>
     /// <param name="httpClientFactory"></param>
     /// <param name="identifier">Bluesky identifier</param>
@@ -64,17 +64,28 @@ public class BlueskyClient : IBlueskyClient
         IHttpClientFactory httpClientFactory,
         string identifier,
         string password)
-        : this(httpClientFactory, identifier, password, new[] { "en", "en-US" }, NullLogger<BlueskyClient>.Instance)
+        : this(httpClientFactory, identifier, password, ["en", "en-US"], NullLogger<BlueskyClient>.Instance)
     {
     }
 
     /// <summary>
-    /// 
+    /// Creates a new instance of the Bluesky client
+    /// </summary>
+    /// <param name="identifier">Bluesky identifier</param>
+    /// <param name="password">Bluesky application password</param>
+    /// <param name="logger"></param>
+    public BlueskyClient(string identifier, string password, ILogger<BlueskyClient> logger)
+        : this(new BlueskyHttpClientFactory(), identifier, password, ["en", "en-US"], logger)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new instance of the Bluesky client
     /// </summary>
     /// <param name="identifier">Bluesky identifier</param>
     /// <param name="password">Bluesky application password</param>
     public BlueskyClient(string identifier, string password)
-        : this(new BlueskyHttpClientFactory(), identifier, password)
+        : this(identifier, password, NullLogger<BlueskyClient>.Instance)
     {
     }
 
@@ -85,6 +96,12 @@ public class BlueskyClient : IBlueskyClient
     /// <returns></returns>
     public Task Post(string text) => CreatePost(text, null);
     
+    /// <summary>
+    /// Create post with link
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="uri"></param>
+    /// <returns></returns>
     public Task Post(string text, Uri uri) => CreatePost(text, uri);
 
 
