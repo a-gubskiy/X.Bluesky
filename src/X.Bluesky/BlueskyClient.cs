@@ -15,12 +15,24 @@ namespace X.Bluesky;
 public interface IBlueskyClient
 {
     /// <summary>
-    /// Make post with link
+    /// Create post
     /// </summary>
-    /// <param name="text"></param>
+    /// <param name="text">
+    /// Post text
+    /// </param>
     /// <returns></returns>
     Task Post(string text);
-    
+
+    /// <summary>
+    /// Create post with link
+    /// </summary>
+    /// <param name="text">
+    /// Post text
+    /// </param>
+    /// <param name="uri">
+    /// Url of attachment page
+    /// </param>
+    /// <returns></returns>
     Task Post(string text, Uri uri);
 }
 
@@ -89,19 +101,10 @@ public class BlueskyClient : IBlueskyClient
     {
     }
 
-    /// <summary>
-    /// Create post
-    /// </summary>
-    /// <param name="text">Post text</param>
-    /// <returns></returns>
+    /// <inheritdoc />
     public Task Post(string text) => CreatePost(text, null);
-    
-    /// <summary>
-    /// Create post with link
-    /// </summary>
-    /// <param name="text"></param>
-    /// <param name="uri"></param>
-    /// <returns></returns>
+
+    /// <inheritdoc />
     public Task Post(string text, Uri uri) => CreatePost(text, uri);
 
 
