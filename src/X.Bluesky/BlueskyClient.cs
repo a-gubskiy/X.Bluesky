@@ -51,19 +51,21 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="identifier">Bluesky identifier</param>
     /// <param name="password">Bluesky application password</param>
     /// <param name="languages">Post languages</param>
+    /// <param name="reuseSession">Reuse session</param>
     /// <param name="logger"></param>
     public BlueskyClient(
         IHttpClientFactory httpClientFactory,
         string identifier,
         string password,
         IEnumerable<string> languages,
+        bool reuseSession,
         ILogger<BlueskyClient> logger)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _languages = languages.ToFrozenSet();
         _mentionResolver = new MentionResolver(_httpClientFactory);
-        _authorizationClient = new AuthorizationClient(httpClientFactory, identifier, password);
+        _authorizationClient = new AuthorizationClient(httpClientFactory, identifier, password, reuseSession);
     }
 
     /// <summary>
@@ -76,7 +78,7 @@ public class BlueskyClient : IBlueskyClient
         IHttpClientFactory httpClientFactory,
         string identifier,
         string password)
-        : this(httpClientFactory, identifier, password, ["en", "en-US"], NullLogger<BlueskyClient>.Instance)
+        : this(httpClientFactory, identifier, password, ["en", "en-US"], false, NullLogger<BlueskyClient>.Instance)
     {
     }
 
@@ -85,9 +87,10 @@ public class BlueskyClient : IBlueskyClient
     /// </summary>
     /// <param name="identifier">Bluesky identifier</param>
     /// <param name="password">Bluesky application password</param>
+    /// <param name="reuseSession">Reuse session</param>
     /// <param name="logger"></param>
-    public BlueskyClient(string identifier, string password, ILogger<BlueskyClient> logger)
-        : this(new BlueskyHttpClientFactory(), identifier, password, ["en", "en-US"], logger)
+    public BlueskyClient(string identifier, string password, bool reuseSession, ILogger<BlueskyClient> logger)
+        : this(new BlueskyHttpClientFactory(), identifier, password, ["en", "en-US"], reuseSession, logger)
     {
     }
 
@@ -97,7 +100,7 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="identifier">Bluesky identifier</param>
     /// <param name="password">Bluesky application password</param>
     public BlueskyClient(string identifier, string password)
-        : this(identifier, password, NullLogger<BlueskyClient>.Instance)
+        : this(identifier, password, false, NullLogger<BlueskyClient>.Instance)
     {
     }
 
