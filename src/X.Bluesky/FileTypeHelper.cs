@@ -25,12 +25,12 @@ public class FileTypeHelper
             if (lastIndex != -1 && lastIndex < uri.AbsolutePath.Length - 1)
             {
                 // Return the file extension, including the dot
-                return uri.AbsolutePath.Substring(lastIndex);
+                return uri.AbsolutePath[lastIndex..];
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning($"Error extracting file extension: {ex.Message}", ex);
+            _logger.LogWarning(ex, "Error extracting file extension: {Message}", ex.Message);
         }
 
         // Return an empty string if no extension found or an error occurred
