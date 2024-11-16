@@ -6,6 +6,10 @@ public class FileTypeHelper
 {
     private readonly ILogger _logger;
 
+    /// <summary>
+    /// Create a new instance of FileTypeHelper
+    /// </summary>
+    /// <param name="logger"></param>
     public FileTypeHelper(ILogger logger)
     {
         _logger = logger;
@@ -58,33 +62,19 @@ public class FileTypeHelper
             extension = "." + extension;
         }
 
-        switch (extension.ToLower())
+        return extension.ToLower() switch
         {
-            case ".jpg":
-            case ".jpeg":
-                return "image/jpeg";
-            case ".png":
-                return "image/png";
-            case ".gif":
-                return "image/gif";
-            case ".webp":
-                return "image/webp";
-            case ".svg":
-                return "image/svg+xml";
-            case ".tiff":
-            case ".tif":
-                return "image/tiff";
-            case ".avif":
-                return "image/avif";
-            case ".heic":
-                return "image/heic";
-            case ".bmp":
-                return "image/bmp";
-            case ".ico":
-            case ".icon":
-                return "image/x-icon";
-            default:
-                return "application/octet-stream"; // Default MIME type
-        }
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            ".tiff" or ".tif" => "image/tiff",
+            ".avif" => "image/avif",
+            ".heic" => "image/heic",
+            ".bmp" => "image/bmp",
+            ".ico" or ".icon" => "image/x-icon",
+            _ => "application/octet-stream"
+        };
     }
 }
