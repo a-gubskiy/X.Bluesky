@@ -1,4 +1,5 @@
 using System.Text;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using X.Bluesky.Models;
 
@@ -15,11 +16,13 @@ public class AuthorizationClient : IAuthorizationClient
     private readonly string _identifier;
     private readonly string _password;
 
+    [PublicAPI]
     public AuthorizationClient(string identifier, string password)
         : this(new BlueskyHttpClientFactory(), identifier, password)
     {
     }
 
+    [PublicAPI]
     public AuthorizationClient(IHttpClientFactory httpClientFactory, string identifier, string password)
     {
         _httpClientFactory = httpClientFactory;
