@@ -15,16 +15,31 @@ public class AuthorizationClient : IAuthorizationClient
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _identifier;
     private readonly string _password;
+    
+    /// <summary>
+    /// Session reuse flag
+    /// </summary>
+    private readonly bool _reuseSession;
+    
+    private Session? _session;
+    private DateTime? _sessionRefreshedAt;
 
     [PublicAPI]
     public AuthorizationClient(string identifier, string password)
-        : this(new BlueskyHttpClientFactory(), identifier, password)
+        : this(new BlueskyHttpClientFactory(), identifier, password, false)
+    {
+    }
+    
+    [PublicAPI]
+    public AuthorizationClient(string identifier, string password, bool reuseSession)
+        : this(new BlueskyHttpClientFactory(), identifier, password, reuseSession)
     {
     }
 
     [PublicAPI]
-    public AuthorizationClient(IHttpClientFactory httpClientFactory, string identifier, string password)
+    public AuthorizationClient(IHttpClientFactory httpClientFactory, string identifier, string password, bool reuseSession)
     {
+        _reuseSession = reuseSession;
         _httpClientFactory = httpClientFactory;
         _identifier = identifier;
         _password = password;
@@ -38,6 +53,13 @@ public class AuthorizationClient : IAuthorizationClient
     /// </returns>
     public async Task<Session> GetSession()
     {
+        if (_reuseSession && _session != null && _sessionRefreshedAt != null && _sessionRefreshedAt.Value.AddMinutes(90) > DateTime.UtcNow)
+        {
+            // Reuse existing session
+            
+            return _session;
+        }
+        
         var requestData = new
         {
             identifier = _identifier,
@@ -56,7 +78,10 @@ public class AuthorizationClient : IAuthorizationClient
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
+        
+        _session = JsonConvert.DeserializeObject<Session>(jsonResponse)!;
+        _sessionRefreshedAt = DateTime.UtcNow;
 
-        return JsonConvert.DeserializeObject<Session>(jsonResponse)!;
+        return _session;
     }
 }
