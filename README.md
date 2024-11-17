@@ -22,7 +22,8 @@ By leveraging the Bluesky API, this project allows for straightforward integrati
 
 ### Installation
 
-To use the X.Bluesky library in your project, include it as a dependency in your project's file (e.g., `csproj`). Documentation on how to do this will be provided based on the package hosting solution used (e.g., NuGet).
+To use the X.Bluesky library in your project, include it as a dependency in your project's file (e.g., `csproj`). 
+See the [NuGet package page](https://www.nuget.org/packages/X.Bluesky/) for the latest version.
 
 ### Usage
 
