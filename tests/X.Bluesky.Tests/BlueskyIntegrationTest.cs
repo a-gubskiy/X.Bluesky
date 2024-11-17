@@ -6,11 +6,11 @@ namespace X.Bluesky.Tests;
 
 public class BlueskyIntegrationTest
 {
-    [Fact]
+    [Fact(Skip = "On demand")]
     public async Task CheckFailedAuth()
     {
-        var identifier = "321";
-        var password = "1234";
+        var identifier = "devdigest.today";
+        var password = "";
 
         var authorizationClient = new AuthorizationClient(identifier, password);
 
@@ -19,7 +19,7 @@ public class BlueskyIntegrationTest
         Assert.NotNull(session);
     }
     
-    [Fact]
+    [Fact(Skip = "On demand")]
     public async Task CheckSending()
     {
         var identifier = "devdigest.today";
