@@ -11,10 +11,10 @@
         <Copyright>Andrew Gubskiy © 2024</Copyright>
         <Company>Ukrainian .NET Developer Community</Company>
 
-        <Version>1.1.5-beta</Version>
-        <AssemblyVersion>1.1.5</AssemblyVersion>
-        <FileVersion>1.1.5</FileVersion>
-        <PackageVersion>1.1.5-beta</PackageVersion>
+        <Version>1.1.7</Version>
+        <AssemblyVersion>1.1.7</AssemblyVersion>
+        <FileVersion>1.1.7</FileVersion>
+        <PackageVersion>1.1.7</PackageVersion>
 
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/ernado-x/X.Bluesky.git</RepositoryUrl>
