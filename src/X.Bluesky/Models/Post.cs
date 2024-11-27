@@ -11,7 +11,7 @@ public record Post
 
     public string CreatedAt { get; set; } = "";
 
-    public Embed Embed { get; set; } = new();
+    public Embed? Embed { get; set; } = null;
 
     public List<string> Langs { get; set; } = new();
 
