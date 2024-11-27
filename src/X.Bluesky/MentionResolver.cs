@@ -20,49 +20,22 @@ public interface IMentionResolver
 /// </summary>
 public class MentionResolver : IMentionResolver
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly Uri _baseUrl;
     private readonly ILogger _logger;
-
-    /// <summary>
-    /// Create a new instance of MentionResolver
-    /// </summary>
-    [PublicAPI]
-    public MentionResolver()
-        : this(new BlueskyHttpClientFactory(), new NullLogger<MentionResolver>())
-    {
-    }
+    private readonly IHttpClientFactory _httpClientFactory;
 
     /// <summary>
     /// Create a new instance of MentionResolver
     /// </summary>
     /// <param name="httpClientFactory"></param>
-    [PublicAPI]
-    public MentionResolver(IHttpClientFactory httpClientFactory)
-        : this(httpClientFactory, new NullLogger<MentionResolver>())
-    {
-    }
-
-    /// <summary>
-    /// Create a new instance of MentionResolver
-    /// </summary>
-    /// <param name="httpClientFactory"></param>
+    /// <param name="baseUrl">Bluesky base url</param>
     /// <param name="logger"></param>
     [PublicAPI]
-    public MentionResolver(IHttpClientFactory httpClientFactory, ILogger logger)
+    public MentionResolver(IHttpClientFactory httpClientFactory, Uri baseUrl, ILogger logger)
     {
         _httpClientFactory = httpClientFactory;
+        _baseUrl = baseUrl;
         _logger = logger;
-    }
-
-    /// <summary>
-    /// Create a new instance of MentionResolver
-    /// </summary>
-    /// <param name="httpClientFactory"></param>
-    /// <param name="logger"></param>
-    [PublicAPI]
-    public MentionResolver(IHttpClientFactory httpClientFactory, ILogger<MentionResolver> logger)
-        : this(httpClientFactory, (ILogger)logger)
-    {
     }
 
     /// <inheritdoc />
@@ -70,7 +43,7 @@ public class MentionResolver : IMentionResolver
     {
         var httpClient = _httpClientFactory.CreateClient();
 
-        const string url = "https://bsky.social/xrpc/com.atproto.identity.resolveHandle";
+        var url = $"{_baseUrl.ToString().TrimEnd('/')}/xrpc/com.atproto.identity.resolveHandle";
 
         var requestUri = $"{url}?handle={mention.Replace("@", string.Empty)}";
 

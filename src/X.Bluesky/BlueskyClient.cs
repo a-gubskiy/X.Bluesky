@@ -43,6 +43,7 @@ public class BlueskyClient : IBlueskyClient
     private readonly IAuthorizationClient _authorizationClient;
     private readonly IMentionResolver _mentionResolver;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly Uri _baseUrl;
     private readonly IReadOnlyCollection<string> _languages;
 
     /// <summary>
@@ -61,12 +62,60 @@ public class BlueskyClient : IBlueskyClient
         IEnumerable<string> languages,
         bool reuseSession,
         ILogger<BlueskyClient> logger)
+        : this(httpClientFactory, identifier, password, languages, reuseSession, new Uri("https://bsky.social"), logger)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new instance of the Bluesky client
+    /// </summary>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="languages">Post languages</param>
+    /// <param name="baseUrl">Bluesky base url</param>
+    /// <param name="logger"></param>
+    /// <param name="mentionResolver"></param>
+    /// <param name="authorizationClient"></param>
+    public BlueskyClient(
+        IHttpClientFactory httpClientFactory,
+        IEnumerable<string> languages,
+        Uri baseUrl,
+        IMentionResolver mentionResolver,
+        IAuthorizationClient authorizationClient,
+        ILogger<BlueskyClient> logger)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _baseUrl = baseUrl;
         _languages = languages.ToFrozenSet();
-        _mentionResolver = new MentionResolver(_httpClientFactory);
-        _authorizationClient = new AuthorizationClient(httpClientFactory, identifier, password, reuseSession);
+        _mentionResolver = mentionResolver;
+        _authorizationClient = authorizationClient;
+    }
+
+    /// <summary>
+    /// Creates a new instance of the Bluesky client
+    /// </summary>
+    /// <param name="httpClientFactory"></param>
+    /// <param name="identifier">User identifier</param>
+    /// <param name="password">User password or application password</param>
+    /// <param name="languages">Post languages</param>
+    /// <param name="reuseSession">Indicates whether to reuse the session</param>
+    /// <param name="baseUrl">Bluesky base url</param>>
+    /// <param name="logger">Logger</param>
+    public BlueskyClient(
+        IHttpClientFactory httpClientFactory,
+        string identifier,
+        string password,
+        IEnumerable<string> languages,
+        bool reuseSession,
+        Uri baseUrl,
+        ILogger<BlueskyClient> logger)
+        : this(
+            httpClientFactory,
+            languages,
+            baseUrl,
+            new MentionResolver(httpClientFactory, baseUrl, logger),
+            new AuthorizationClient(httpClientFactory, identifier, password, reuseSession, baseUrl), logger)
+    {
     }
 
     /// <summary>
@@ -169,7 +218,7 @@ public class BlueskyClient : IBlueskyClient
 
         if (url != null)
         {
-            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
+            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _baseUrl, _logger);
 
             post.Embed = new Embed
             {
@@ -178,7 +227,7 @@ public class BlueskyClient : IBlueskyClient
             };
         }
 
-        var requestUri = "https://bsky.social/xrpc/com.atproto.repo.createRecord";
+        var requestUri = $"{_baseUrl.ToString().TrimEnd('/')}/xrpc/com.atproto.repo.createRecord";
 
         var requestData = new CreatePostRequest
         {

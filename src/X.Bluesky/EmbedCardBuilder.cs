@@ -7,16 +7,18 @@ namespace X.Bluesky;
 
 public class EmbedCardBuilder
 {
+    private readonly Uri _baseUrl;
     private readonly ILogger _logger;
+    private readonly Session _session;
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly Session _session;
 
-    public EmbedCardBuilder(IHttpClientFactory httpClientFactory, Session session, ILogger logger)
+    public EmbedCardBuilder(IHttpClientFactory httpClientFactory, Session session, Uri baseUrl, ILogger logger)
     {
         _logger = logger;
-        _httpClientFactory = httpClientFactory;
+        _baseUrl = baseUrl;
         _session = session;
+        _httpClientFactory = httpClientFactory;
         _fileTypeHelper = new FileTypeHelper(logger);
     }
     
@@ -71,7 +73,9 @@ public class EmbedCardBuilder
         var imageContent = new StreamContent(await imgResp.Content.ReadAsStreamAsync());
         imageContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
+        var requestUri = $"{_baseUrl.ToString().TrimEnd('/')}/xrpc/com.atproto.repo.uploadBlob";
+        
+        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
         {
             Content = imageContent,
         };
