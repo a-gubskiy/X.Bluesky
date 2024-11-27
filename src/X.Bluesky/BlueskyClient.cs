@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
@@ -127,7 +128,7 @@ public class BlueskyClient : IBlueskyClient
         }
 
         // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
-        var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var now = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
         var facetBuilder = new FacetBuilder();
 
         var facets = facetBuilder.GetFacets(text);
