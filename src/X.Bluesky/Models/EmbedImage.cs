@@ -16,7 +16,7 @@ public record ImageData
 
     public Thumb Image { get; set; } = new();
 
-    public AspectRatio AspectRatio { get; set; } = new();
+    public AspectRatio? AspectRatio { get; set; } = null;
 }
 
 public record Thumb
