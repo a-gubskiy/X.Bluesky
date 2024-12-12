@@ -76,13 +76,13 @@ public class EmbedExternalBuilder : EmbedBuilder
     {
         var httpClient = _httpClientFactory.CreateClient();
 
-        var imgResp = await httpClient.GetAsync(url);
-        imgResp.EnsureSuccessStatusCode();
+        var response = await httpClient.GetAsync(url);
+        response.EnsureSuccessStatusCode();
 
         var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(url);
 
-        var image = await imgResp.Content.ReadAsByteArrayAsync();
-
+        var image = await response.Content.ReadAsByteArrayAsync();
+        
         var thumb = await _embedImageBuilder.UploadImage(image, mimeType);
 
         return thumb;

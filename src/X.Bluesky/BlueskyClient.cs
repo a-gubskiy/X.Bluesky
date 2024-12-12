@@ -43,7 +43,7 @@ public interface IBlueskyClient
     /// <param name="text"></param>
     /// <param name="image"></param>
     /// <returns></returns>
-    Task Post(string text, byte[] image);
+    Task Post(string text, Image image);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -170,7 +170,7 @@ public class BlueskyClient : IBlueskyClient
     public Task Post(string text, Uri uri) => CreatePost(text, uri, null);
 
     /// <inheritdoc />
-    public Task Post(string text, byte[] image) => CreatePost(text, null, image);
+    public Task Post(string text, Image image) => CreatePost(text, null, image);
 
     /// <summary>
     /// Create post
@@ -179,7 +179,7 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="url"></param>
     /// <param name="image"></param>
     /// <returns></returns>
-    private async Task CreatePost(string text, Uri? url, byte[]? image)
+    private async Task CreatePost(string text, Uri? url, Image? image)
     {
         var session = await _authorizationClient.GetSession();
 
@@ -216,17 +216,12 @@ public class BlueskyClient : IBlueskyClient
             Langs = _languages.ToList(),
             Facets = facets.ToList()
         };
-        
 
         if (image != null)
         {
-            var embedCardBuilder = new EmbedImageBuilder(_httpClientFactory, session, _baseUrl, _logger);
-        
-            // post.Embed = new Embed
-            // {
-            //     External = await embedCardBuilder.GetEmbedCard(image),
-            //     Type = "app.bsky.embed.external"
-            // };
+            var embedBuilder = new EmbedImageBuilder(_httpClientFactory, session, _baseUrl, _logger);
+
+            post.Embed = await embedBuilder.GetEmbedCard(image.Content, image.MimeType, image.Alt);
         }
         else
         {
@@ -243,9 +238,9 @@ public class BlueskyClient : IBlueskyClient
 
             if (url != null)
             {
-                var embedCardBuilder = new EmbedExternalBuilder(_httpClientFactory, session, _baseUrl, _logger);
+                var embedBuilder = new EmbedExternalBuilder(_httpClientFactory, session, _baseUrl, _logger);
 
-                post.Embed = await embedCardBuilder.GetEmbedCard(url);
+                post.Embed = await embedBuilder.GetEmbedCard(url);
             }
         }
 
