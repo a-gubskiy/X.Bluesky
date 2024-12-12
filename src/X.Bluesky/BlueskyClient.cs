@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
@@ -31,11 +32,11 @@ public interface IBlueskyClient
     /// <param name="text">
     /// Post text
     /// </param>
-    /// <param name="uri">
+    /// <param name="url">
     /// Url of attachment page
     /// </param>
     /// <returns></returns>
-    Task Post(string text, Uri uri);
+    Task Post(string text, Uri url);
 
     /// <summary>
     /// Create post with image
@@ -52,7 +53,16 @@ public interface IBlueskyClient
     /// <param name="url"></param>
     /// <param name="image"></param>
     /// <returns></returns>
-    Task Post(string text, Uri? url, Image? image);
+    Task Post(string text, Uri? url, Image image);
+    
+    /// <summary>
+    /// Create post with link and images
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="url"></param>
+    /// <param name="images"></param>
+    /// <returns></returns>
+    Task Post(string text, Uri? url, IEnumerable<Image> images);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -173,16 +183,19 @@ public class BlueskyClient : IBlueskyClient
     }
 
     /// <inheritdoc />
-    public Task Post(string text) => Post(text, null, null);
+    public Task Post(string text) => Post(text, null, ImmutableList<Image>.Empty);
 
     /// <inheritdoc />
-    public Task Post(string text, Uri uri) => Post(text, uri, null);
+    public Task Post(string text, Uri url) => Post(text, url, ImmutableList<Image>.Empty);
 
     /// <inheritdoc />
     public Task Post(string text, Image image) => Post(text, null, image);
+    
+    /// <inheritdoc />
+    public Task Post(string text, Uri? url, Image image) => Post(text, url, ImmutableList.Create(image));
 
     /// <inheritdoc />
-    public async Task Post(string text, Uri? url, Image? image)
+    public async Task Post(string text, Uri? url, IEnumerable<Image> images)
     {
         var session = await _authorizationClient.GetSession();
 
@@ -220,11 +233,11 @@ public class BlueskyClient : IBlueskyClient
             Facets = facets.ToList()
         };
 
-        if (image != null)
+        if (images.Any())
         {
             var embedBuilder = new EmbedImageBuilder(_httpClientFactory, session, _baseUrl, _logger);
 
-            post.Embed = await embedBuilder.GetEmbedCard(image.Content, image.MimeType, image.Alt);
+            post.Embed = await embedBuilder.GetEmbedCard(images);
         }
         else
         {
@@ -284,4 +297,6 @@ public class BlueskyClient : IBlueskyClient
         // This throws an exception if the HTTP response status is an error code.
         response.EnsureSuccessStatusCode();
     }
+
+    
 }
