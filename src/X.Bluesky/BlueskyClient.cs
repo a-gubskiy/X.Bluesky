@@ -35,6 +35,14 @@ public interface IBlueskyClient
     /// </param>
     /// <returns></returns>
     Task Post(string text, Uri uri);
+    
+    /// <summary>
+    /// Create post with image
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="image"></param>
+    /// <returns></returns>
+    // Task Post(string text, byte[] image);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -117,7 +125,9 @@ public class BlueskyClient : IBlueskyClient
     /// </summary>
     /// <param name="text">Post text</param>
     /// <param name="url"></param>
+    /// <param name="image"></param>
     /// <returns></returns>
+    // private async Task CreatePost(string text, Uri? url, byte[]? image)
     private async Task CreatePost(string text, Uri? url)
     {
         var session = await _authorizationClient.GetSession();
@@ -177,6 +187,17 @@ public class BlueskyClient : IBlueskyClient
                 Type = "app.bsky.embed.external"
             };
         }
+
+        // if (image != null)
+        // {
+        //     var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
+        //
+        //     post.Embed = new Embed
+        //     {
+        //         External = await embedCardBuilder.GetEmbedCard(image),
+        //         Type = "app.bsky.embed.external"
+        //     };
+        // }
 
         var requestUri = "https://bsky.social/xrpc/com.atproto.repo.createRecord";
 
