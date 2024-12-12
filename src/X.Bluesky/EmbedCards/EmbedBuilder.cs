@@ -2,12 +2,7 @@ using X.Bluesky.Models;
 
 namespace X.Bluesky.EmbedCards;
 
-public interface IEmbedBuilder
-{
-    
-}
-
-public abstract class EmbedBuilder : IEmbedBuilder
+public abstract class EmbedBuilder
 {
     protected readonly Session Session;
 

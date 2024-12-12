@@ -5,7 +5,7 @@ public record Image
     /// <summary>
     /// Image content
     /// </summary>
-    public byte[] Content { get; set; }
+    public byte[] Content { get; set; } = [];
 
     /// <summary>
     /// Image mime type
