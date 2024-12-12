@@ -14,24 +14,29 @@ public record ImageData
 {
     public string Alt { get; set; } = "";
 
-    public Image Image { get; set; } = new();
+    public Thumb Image { get; set; } = new();
 
     public AspectRatio AspectRatio { get; set; } = new();
 }
 
-public record Image
+public record Thumb
 {
-    public string Type { get; set; } = "blob";
+    [JsonProperty("$type")]
+    public string Type { get; set; } = "";
 
-    public Ref Ref { get; set; } = new();
+    [JsonProperty("ref")]
+    public ThumbRef? Ref { get; set; }
 
-    public string MimeType { get; set; } = "image/png";
+    [JsonProperty("mimeType")]
+    public string MimeType { get; set; } = "";
 
+    [JsonProperty("size")]
     public int Size { get; set; }
 }
 
-public record Ref
+public class ThumbRef
 {
+    [JsonProperty("$link")]
     public string Link { get; set; } = "";
 }
 
