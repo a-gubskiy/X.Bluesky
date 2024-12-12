@@ -10,7 +10,7 @@ public class ClientTest
 {
     private readonly string _identifier = "your-identifier";
     private readonly string _password = "your-password";
-    
+
     [Fact(Skip = "On demand")]
     public async Task CheckFacets_Sending()
     {
