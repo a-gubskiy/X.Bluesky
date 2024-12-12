@@ -7,19 +7,18 @@ namespace X.Bluesky.EmbedCards;
 
 public class EmbedExternalBuilder : EmbedBuilder
 {
-    private readonly Uri _baseUrl;
     private readonly ILogger _logger;
-    private readonly Session _session;
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly EmbedImageBuilder _embedImageBuilder;
 
-    public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, Uri baseUrl, ILogger logger) 
+    public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, Uri baseUrl, ILogger logger)
         : base(session)
     {
         _logger = logger;
-        _baseUrl = baseUrl;
         _httpClientFactory = httpClientFactory;
         _fileTypeHelper = new FileTypeHelper(logger);
+        _embedImageBuilder = new EmbedImageBuilder(httpClientFactory, session, baseUrl, logger);
     }
 
     /// <summary>
@@ -82,53 +81,10 @@ public class EmbedExternalBuilder : EmbedBuilder
 
         var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(url);
 
-
         var image = await imgResp.Content.ReadAsByteArrayAsync();
-        
-        return await UploadImage(image, mimeType);
-    }
 
-    /// <summary>
-    /// Upload image to the Bsky server
-    /// </summary>
-    /// <param name="image">
-    /// Image content
-    /// </param>
-    /// <param name="mimeType"></param>
-    /// <returns></returns>
-    private async Task<Thumb?> UploadImage(byte[] image, string mimeType)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
+        var thumb = await _embedImageBuilder.UploadImage(image, mimeType);
 
-        var imageContent = new StreamContent(new MemoryStream(image));
-        imageContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
-
-        var requestUri = $"{_baseUrl.ToString().TrimEnd('/')}/xrpc/com.atproto.repo.uploadBlob";
-        
-        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = imageContent,
-        };
-
-        // Add the Authorization header with the access token to the request message
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _session.AccessJwt);
-
-        var response = await httpClient.SendAsync(request);
-
-        response.EnsureSuccessStatusCode();
-
-        var json = await response.Content.ReadAsStringAsync();
-        var blob = JsonConvert.DeserializeObject<BlobResponse>(json);
-
-        var card = blob?.Blob;
-
-        if (card != null)
-        {
-            // ToDo: fix it
-            // This is hack for fix problem when Type is empty after deserialization
-            card.Type = "blob";
-        }
-
-        return card;
+        return thumb;
     }
 }

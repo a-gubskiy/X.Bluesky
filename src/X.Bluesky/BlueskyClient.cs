@@ -220,7 +220,7 @@ public class BlueskyClient : IBlueskyClient
 
         if (image != null)
         {
-            var embedCardBuilder = new EmbedExternalBuilder(_httpClientFactory, session, _logger);
+            var embedCardBuilder = new EmbedImageBuilder(_httpClientFactory, session, _baseUrl, _logger);
         
             // post.Embed = new Embed
             // {
