@@ -19,13 +19,13 @@ public class EmbedCardBuilder
         _session = session;
         _fileTypeHelper = new FileTypeHelper(logger);
     }
-    
+
     /// <summary>
     /// Create embed card
     /// </summary>
     /// <param name="url"></param>
     /// <returns></returns>
-    public async Task<EmbedCard> GetEmbedCard(Uri url)
+    public async Task<IEmbed> GetEmbedCard(Uri url)
     {
         var extractor = new Web.MetaExtractor.Extractor();
         var metadata = await extractor.ExtractAsync(url);
@@ -49,14 +49,20 @@ public class EmbedCardBuilder
                 }
                 else
                 {
-                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(imgUrl));    
+                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(imgUrl));
                 }
-                
+
                 _logger.LogInformation("EmbedCard created");
             }
         }
 
-        return card;
+        var embed = new Embed
+        {
+            External = card,
+            Type = "app.bsky.embed.external"
+        };
+
+        return embed;
     }
 
     private async Task<Thumb?> UploadImageAndSetThumbAsync(Uri imageUrl)
@@ -92,7 +98,7 @@ public class EmbedCardBuilder
         {
             // ToDo: fix it
             // This is hack for fix problem when Type is empty after deserialization
-            card.Type = "blob"; 
+            card.Type = "blob";
         }
 
         return card;

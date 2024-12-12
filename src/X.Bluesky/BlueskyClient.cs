@@ -181,11 +181,7 @@ public class BlueskyClient : IBlueskyClient
         {
             var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
 
-            post.Embed = new Embed
-            {
-                External = await embedCardBuilder.GetEmbedCard(url),
-                Type = "app.bsky.embed.external"
-            };
+            post.Embed = await embedCardBuilder.GetEmbedCard(url);
         }
 
         // if (image != null)
