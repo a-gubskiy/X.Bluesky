@@ -167,35 +167,38 @@ public class BlueskyClient : IBlueskyClient
             Facets = facets.ToList()
         };
 
-        if (url == null)
-        {
-            //If no link was defined we're trying to get link from facets 
-            url = facets
-                .SelectMany(facet => facet.Features)
-                .Where(feature => feature is FacetFeatureLink)
-                .Cast<FacetFeatureLink>()
-                .Select(f => f.Uri)
-                .FirstOrDefault();
-        }
+        
 
-        if (url != null)
+        if (image != null)
         {
             var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
-
-            post.Embed = await embedCardBuilder.GetEmbedCard(url);
+        
+            // post.Embed = new Embed
+            // {
+            //     External = await embedCardBuilder.GetEmbedCard(image),
+            //     Type = "app.bsky.embed.external"
+            // };
         }
+        else
+        {
+            if (url == null)
+            {
+                //If no link was defined we're trying to get link from facets 
+                url = facets
+                    .SelectMany(facet => facet.Features)
+                    .Where(feature => feature is FacetFeatureLink)
+                    .Cast<FacetFeatureLink>()
+                    .Select(f => f.Uri)
+                    .FirstOrDefault();
+            }
 
+            if (url != null)
+            {
+                var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
 
-        // if (image != null)
-        // {
-        //     var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
-        //
-        //     post.Embed = new Embed
-        //     {
-        //         External = await embedCardBuilder.GetEmbedCard(image),
-        //         Type = "app.bsky.embed.external"
-        //     };
-        // }
+                post.Embed = await embedCardBuilder.GetEmbedCard(url);
+            }
+        }
 
         var requestUri = "https://bsky.social/xrpc/com.atproto.repo.createRecord";
 
