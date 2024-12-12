@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using X.Bluesky.EmbedCards;
 using X.Bluesky.Models;
 
 namespace X.Bluesky;
@@ -166,12 +167,11 @@ public class BlueskyClient : IBlueskyClient
             Langs = _languages.ToList(),
             Facets = facets.ToList()
         };
-
         
 
         if (image != null)
         {
-            var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
+            var embedCardBuilder = new EmbedExternalBuilder(_httpClientFactory, session, _logger);
         
             // post.Embed = new Embed
             // {
@@ -194,7 +194,7 @@ public class BlueskyClient : IBlueskyClient
 
             if (url != null)
             {
-                var embedCardBuilder = new EmbedCardBuilder(_httpClientFactory, session, _logger);
+                var embedCardBuilder = new EmbedExternalBuilder(_httpClientFactory, session, _logger);
 
                 post.Embed = await embedCardBuilder.GetEmbedCard(url);
             }

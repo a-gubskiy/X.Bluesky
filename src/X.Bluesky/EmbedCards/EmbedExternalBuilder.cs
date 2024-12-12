@@ -3,16 +3,16 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using X.Bluesky.Models;
 
-namespace X.Bluesky;
+namespace X.Bluesky.EmbedCards;
 
-public class EmbedCardBuilder
+public class EmbedExternalBuilder
 {
     private readonly ILogger _logger;
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly Session _session;
 
-    public EmbedCardBuilder(IHttpClientFactory httpClientFactory, Session session, ILogger logger)
+    public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, ILogger logger)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
