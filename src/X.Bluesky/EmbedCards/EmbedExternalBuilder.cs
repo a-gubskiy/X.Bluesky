@@ -44,11 +44,11 @@ public class EmbedExternalBuilder : EmbedBuilder
             {
                 if (!imgUrl.Contains("://"))
                 {
-                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(url, imgUrl));
+                    card.Thumb = await UploadImage(new Uri(url, imgUrl));
                 }
                 else
                 {
-                    card.Thumb = await UploadImageAndSetThumbAsync(new Uri(imgUrl));
+                    card.Thumb = await UploadImage(new Uri(imgUrl));
                 }
 
                 _logger.LogInformation("EmbedCard created");
@@ -63,16 +63,41 @@ public class EmbedExternalBuilder : EmbedBuilder
         return embed;
     }
 
-    private async Task<Thumb?> UploadImageAndSetThumbAsync(Uri imageUrl)
+    /// <summary>
+    /// Upload image to the Bsky server
+    /// </summary>
+    /// <param name="url">
+    /// Image URL
+    /// </param>
+    /// <returns></returns>
+    private async Task<Thumb?> UploadImage(Uri url)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
-        var imgResp = await httpClient.GetAsync(imageUrl);
+        var imgResp = await httpClient.GetAsync(url);
         imgResp.EnsureSuccessStatusCode();
 
-        var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(imageUrl);
+        var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(url);
 
-        var imageContent = new StreamContent(await imgResp.Content.ReadAsStreamAsync());
+
+        var image = await imgResp.Content.ReadAsByteArrayAsync();
+        
+        return await UploadImage(image, mimeType);
+    }
+
+    /// <summary>
+    /// Upload image to the Bsky server
+    /// </summary>
+    /// <param name="image">
+    /// Image content
+    /// </param>
+    /// <param name="mimeType"></param>
+    /// <returns></returns>
+    private async Task<Thumb?> UploadImage(byte[] image, string mimeType)
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+
+        var imageContent = new StreamContent(new MemoryStream(image));
         imageContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
         var request = new HttpRequestMessage(HttpMethod.Post, "https://bsky.social/xrpc/com.atproto.repo.uploadBlob")
