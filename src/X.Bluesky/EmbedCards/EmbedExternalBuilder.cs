@@ -1,6 +1,4 @@
-using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using X.Bluesky.Models;
 
 namespace X.Bluesky.EmbedCards;

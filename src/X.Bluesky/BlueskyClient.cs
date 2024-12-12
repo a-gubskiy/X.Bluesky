@@ -44,6 +44,15 @@ public interface IBlueskyClient
     /// <param name="image"></param>
     /// <returns></returns>
     Task Post(string text, Image image);
+
+    /// <summary>
+    /// Create post with link and image
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="url"></param>
+    /// <param name="image"></param>
+    /// <returns></returns>
+    Task Post(string text, Uri? url, Image? image);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -164,22 +173,16 @@ public class BlueskyClient : IBlueskyClient
     }
 
     /// <inheritdoc />
-    public Task Post(string text) => CreatePost(text, null, null);
+    public Task Post(string text) => Post(text, null, null);
 
     /// <inheritdoc />
-    public Task Post(string text, Uri uri) => CreatePost(text, uri, null);
+    public Task Post(string text, Uri uri) => Post(text, uri, null);
 
     /// <inheritdoc />
-    public Task Post(string text, Image image) => CreatePost(text, null, image);
+    public Task Post(string text, Image image) => Post(text, null, image);
 
-    /// <summary>
-    /// Create post
-    /// </summary>
-    /// <param name="text">Post text</param>
-    /// <param name="url"></param>
-    /// <param name="image"></param>
-    /// <returns></returns>
-    private async Task CreatePost(string text, Uri? url, Image? image)
+    /// <inheritdoc />
+    public async Task Post(string text, Uri? url, Image? image)
     {
         var session = await _authorizationClient.GetSession();
 
@@ -225,6 +228,8 @@ public class BlueskyClient : IBlueskyClient
         }
         else
         {
+            //If no image was defined we're trying to get link from facets
+            
             if (url == null)
             {
                 //If no link was defined we're trying to get link from facets 
