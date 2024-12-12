@@ -2,8 +2,9 @@ using Newtonsoft.Json;
 
 namespace X.Bluesky.Models;
 
-
-
+/// <summary>
+/// External embed card
+/// </summary>
 public record EmbedExternal : IEmbed
 {
     [JsonProperty("$type")]
