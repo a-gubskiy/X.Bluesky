@@ -87,7 +87,7 @@ public class EmbedImageBuilder : EmbedBuilder
         };
 
         // Add the Authorization header with the access token to the request message
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _session.AccessJwt);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Session.AccessJwt);
 
         var response = await httpClient.SendAsync(request);
 

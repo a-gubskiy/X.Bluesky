@@ -9,10 +9,10 @@ public interface IEmbedBuilder
 
 public abstract class EmbedBuilder : IEmbedBuilder
 {
-    protected readonly Session _session;
+    protected readonly Session Session;
 
     protected EmbedBuilder(Session session)
     {
-        _session = session;
+        Session = session;
     }
 }
