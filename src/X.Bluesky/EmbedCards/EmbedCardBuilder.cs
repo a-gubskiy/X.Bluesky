@@ -30,7 +30,7 @@ public class EmbedCardBuilder
         var extractor = new Web.MetaExtractor.Extractor();
         var metadata = await extractor.ExtractAsync(url);
 
-        var card = new EmbedCard
+        var card = new External
         {
             Uri = url.ToString(),
             Title = metadata.Title,
@@ -56,10 +56,9 @@ public class EmbedCardBuilder
             }
         }
 
-        var embed = new Embed
+        var embed = new EmbedExternal
         {
-            External = card,
-            Type = "app.bsky.embed.external"
+            External = card
         };
 
         return embed;
