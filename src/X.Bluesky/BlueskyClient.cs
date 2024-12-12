@@ -35,14 +35,14 @@ public interface IBlueskyClient
     /// </param>
     /// <returns></returns>
     Task Post(string text, Uri uri);
-    
+
     /// <summary>
     /// Create post with image
     /// </summary>
     /// <param name="text"></param>
     /// <param name="image"></param>
     /// <returns></returns>
-    // Task Post(string text, byte[] image);
+    Task Post(string text, byte[] image);
 }
 
 public class BlueskyClient : IBlueskyClient
@@ -114,11 +114,13 @@ public class BlueskyClient : IBlueskyClient
     }
 
     /// <inheritdoc />
-    public Task Post(string text) => CreatePost(text, null);
+    public Task Post(string text) => CreatePost(text, null, null);
 
     /// <inheritdoc />
-    public Task Post(string text, Uri uri) => CreatePost(text, uri);
+    public Task Post(string text, Uri uri) => CreatePost(text, uri, null);
 
+    /// <inheritdoc />
+    public Task Post(string text, byte[] image) => CreatePost(text, null, image);
 
     /// <summary>
     /// Create post
@@ -127,8 +129,7 @@ public class BlueskyClient : IBlueskyClient
     /// <param name="url"></param>
     /// <param name="image"></param>
     /// <returns></returns>
-    // private async Task CreatePost(string text, Uri? url, byte[]? image)
-    private async Task CreatePost(string text, Uri? url)
+    private async Task CreatePost(string text, Uri? url, byte[]? image)
     {
         var session = await _authorizationClient.GetSession();
 
@@ -183,6 +184,7 @@ public class BlueskyClient : IBlueskyClient
 
             post.Embed = await embedCardBuilder.GetEmbedCard(url);
         }
+
 
         // if (image != null)
         // {
