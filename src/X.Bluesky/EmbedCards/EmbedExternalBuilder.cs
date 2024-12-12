@@ -5,18 +5,17 @@ using X.Bluesky.Models;
 
 namespace X.Bluesky.EmbedCards;
 
-public class EmbedExternalBuilder
+public class EmbedExternalBuilder : EmbedBuilder
 {
     private readonly ILogger _logger;
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly Session _session;
 
-    public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, ILogger logger)
+    public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, ILogger logger) 
+        : base(session)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
-        _session = session;
         _fileTypeHelper = new FileTypeHelper(logger);
     }
 
