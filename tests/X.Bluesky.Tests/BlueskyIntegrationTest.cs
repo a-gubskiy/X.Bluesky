@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace X.Bluesky.Tests;
@@ -40,8 +41,8 @@ public class BlueskyIntegrationTest
     {
         var mention = "@andrew.gubskiy.com";
         var httpClientFactory = new BlueskyHttpClientFactory();
-        
-        IMentionResolver mentionResolver = new MentionResolver(httpClientFactory);
+
+        IMentionResolver mentionResolver = new MentionResolver(httpClientFactory, new Uri("https://bsky.social"), new NullLogger<MentionResolver>());
         
         var did = await mentionResolver.ResolveMention(mention);
         

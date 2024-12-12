@@ -11,20 +11,13 @@ public record Post
 
     public string CreatedAt { get; set; } = "";
 
-    public Embed? Embed { get; set; } = null;
+    public IEmbed? Embed { get; set; } = null;
 
     public List<string> Langs { get; set; } = new();
 
     public List<Facet>? Facets { get; set; } = null;
 }
 
-public record Embed
-{
-    [JsonProperty("$type")]
-    public string Type { get; set; } = "";
-
-    public EmbedCard External { get; set; } = new();
-}
 
 public record FacetIndex
 {
