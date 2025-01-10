@@ -7,13 +7,13 @@ namespace X.Bluesky.Tests;
 
 public class BlueskyIntegrationTest
 {
+    private const string Identifier = "";
+    private const string Password = "";
+    
     [Fact(Skip = "On demand")]
     public async Task CheckFailedAuth()
     {
-        var identifier = "devdigest.today";
-        var password = "";
-
-        var authorizationClient = new AuthorizationClient(identifier, password);
+        var authorizationClient = new AuthorizationClient(Identifier, Password);
 
         var session = await authorizationClient.GetSession();
 
@@ -23,15 +23,24 @@ public class BlueskyIntegrationTest
     [Fact(Skip = "On demand")]
     public async Task CheckSending()
     {
-        var identifier = "devdigest.today";
-        var password = "";
-        
-        IBlueskyClient client = new BlueskyClient(identifier, password);
+        IBlueskyClient client = new BlueskyClient(Identifier, Password);
 
         var link = new Uri("https://devdigest.today/post/2431");
         var text = $"Hello world! This post contains #devdigest and #microsoft also it include {link} which is in middle of post text and @andrew.gubskiy.com mention";
         
         await client.Post(text);
+        
+        Assert.True(true);
+    }
+    
+    [Fact(Skip = "On demand")]
+    public async Task CheckSendingWithUrl()
+    {
+        IBlueskyClient client = new BlueskyClient(Identifier, Password);
+        
+        await client.Post("Testing!", new Uri("https://www.github.com"));
+        await client.Post("Testing! https://www.github.com");
+        await client.Post("Testing! www.github.com");
         
         Assert.True(true);
     }
