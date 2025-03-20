@@ -55,12 +55,10 @@ public class EmbedExternalBuilder : EmbedBuilder
             }
         }
 
-        var embed = new EmbedExternal
+        return new EmbedExternal
         {
             External = card
         };
-
-        return embed;
     }
 
     /// <summary>
