@@ -58,14 +58,11 @@ internal class FileTypeHelper
     }
 
     /// <summary>
-    /// Determines the MIME type of a resource based on its URI.
+    /// Determines the MIME type of resource based on its URI.
     /// </summary>
     /// <param name="uri">The URI of the resource.</param>
     /// <returns>The MIME type as a string, or "application/octet-stream" if the type cannot be determined.</returns>
-    public string GetMimeTypeFromUrl(Uri uri)
-    {
-        return GetMimeTypeFromUrl(uri.ToString());
-    }
+    public string GetMimeTypeFromUrl(Uri uri) => GetMimeTypeFromUrl(uri.ToString());
 
     /// <summary>
     /// Determines the MIME type based on a file extension.
