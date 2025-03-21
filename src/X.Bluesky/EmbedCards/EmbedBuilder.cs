@@ -1,8 +1,9 @@
 using X.Bluesky.Models;
+using X.Bluesky.Models.API;
 
 namespace X.Bluesky.EmbedCards;
 
-public abstract class EmbedBuilder
+internal abstract class EmbedBuilder
 {
     protected readonly Session Session;
 

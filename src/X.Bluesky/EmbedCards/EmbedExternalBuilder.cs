@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Logging;
 using X.Bluesky.Models;
+using X.Bluesky.Models.API;
 
 namespace X.Bluesky.EmbedCards;
 
-public class EmbedExternalBuilder : EmbedBuilder
+internal class EmbedExternalBuilder : EmbedBuilder
 {
     private readonly ILogger _logger;
     private readonly FileTypeHelper _fileTypeHelper;
@@ -24,7 +25,7 @@ public class EmbedExternalBuilder : EmbedBuilder
     /// </summary>
     /// <param name="url"></param>
     /// <returns></returns>
-    public async Task<IEmbed> GetEmbedCard(Uri url)
+    internal async Task<IEmbed> GetEmbedCard(Uri url)
     {
         var extractor = new Web.MetaExtractor.Extractor();
         var metadata = await extractor.ExtractAsync(url);
@@ -78,7 +79,7 @@ public class EmbedExternalBuilder : EmbedBuilder
         var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(url);
 
         var image = await response.Content.ReadAsByteArrayAsync();
-        
+
         var thumb = await _embedImageBuilder.UploadImage(image, mimeType);
 
         return thumb;

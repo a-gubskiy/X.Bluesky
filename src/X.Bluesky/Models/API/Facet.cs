@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
 
-namespace X.Bluesky.Models;
+namespace X.Bluesky.Models.API;
 
-public record Facet
+internal record Facet
 {
     public FacetIndex Index { get; set; } = new();
 

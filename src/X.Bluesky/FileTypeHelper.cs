@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 
 namespace X.Bluesky;
 
-public class FileTypeHelper
+internal class FileTypeHelper
 {
     private readonly ILogger _logger;
 

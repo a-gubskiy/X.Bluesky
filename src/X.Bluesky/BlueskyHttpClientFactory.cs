@@ -2,7 +2,7 @@ using System.Net;
 
 namespace X.Bluesky;
 
-public class BlueskyHttpClientFactory : IHttpClientFactory
+internal class BlueskyHttpClientFactory : IHttpClientFactory
 {
     private readonly HttpClient _client;
 
@@ -12,12 +12,9 @@ public class BlueskyHttpClientFactory : IHttpClientFactory
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
         };
-        
+
         _client = new HttpClient(handler);
     }
 
-    public HttpClient CreateClient(string name)
-    {
-        return _client;
-    }
+    public HttpClient CreateClient(string name) => _client;
 }

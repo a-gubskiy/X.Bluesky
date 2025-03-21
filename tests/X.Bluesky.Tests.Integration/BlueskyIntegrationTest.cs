@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace X.Bluesky.Tests;
+namespace X.Bluesky.Tests.Integration;
 
 public class BlueskyIntegrationTest
 {

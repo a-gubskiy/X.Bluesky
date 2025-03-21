@@ -2,6 +2,7 @@ using System.Text;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using X.Bluesky.Models;
+using X.Bluesky.Models.API;
 
 namespace X.Bluesky;
 

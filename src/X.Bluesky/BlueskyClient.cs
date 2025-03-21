@@ -1,6 +1,4 @@
-﻿using System.Collections.Frozen;
-using System.Collections.Immutable;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
@@ -10,7 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using X.Bluesky.EmbedCards;
-using X.Bluesky.Models;
+using X.Bluesky.Models.API;
 
 namespace X.Bluesky;
 
@@ -21,46 +19,21 @@ namespace X.Bluesky;
 public interface IBlueskyClient
 {
     /// <summary>
-    /// Creates a post on Bluesky with text content only.
+    /// Posts content to the Bluesky social network.
     /// </summary>
-    /// <param name="text">The text content of the post.</param>
-    /// <returns>A task representing the asynchronous post operation.</returns>
-    Task Post(string text);
+    /// <param name="post">The post object containing all the content and metadata to be published.</param>
+    /// <returns>A task representing the asynchronous operation of posting to Bluesky.</returns>
+    /// <exception cref="System.Security.Authentication.AuthenticationException">Thrown when unable to obtain a valid session.</exception>
+    /// <exception cref="System.Net.Http.HttpRequestException">Thrown when the API request fails.</exception>
+    Task Post(Models.Post post);
+    
+    Task Post(string text) => Post(new Models.Post { Text = text });
+    
+    Task Post(string text, Uri uri) => Post(new Models.Post { Text = text, Url = uri });
 
-    /// <summary>
-    /// Creates a post on Bluesky with text content and a URL.
-    /// </summary>
-    /// <param name="text">The text content of the post.</param>
-    /// <param name="url">The URL to include in the post.</param>
-    /// <param name="autoGenerateCard">Whether to automatically generate a preview card for the URL. Default is true.</param>
-    /// <returns>A task representing the asynchronous post operation.</returns>
-    Task Post(string text, Uri url, bool autoGenerateCard = true);
+    Task Post(string text, Image image) => Post(new Models.Post { Text = text, Images = [image] });
 
-    /// <summary>
-    /// Creates a post on Bluesky with text content and a single image.
-    /// </summary>
-    /// <param name="text">The text content of the post.</param>
-    /// <param name="image">The image to include in the post.</param>
-    /// <returns>A task representing the asynchronous post operation.</returns>
-    Task Post(string text, Image image);
-
-    /// <summary>
-    /// Creates a post on Bluesky with text content, a URL, and a single image.
-    /// </summary>
-    /// <param name="text">The text content of the post.</param>
-    /// <param name="url">The optional URL to include in the post.</param>
-    /// <param name="image">The image to include in the post.</param>
-    /// <returns>A task representing the asynchronous post operation.</returns>
-    Task Post(string text, Uri? url, Image image);
-
-    /// <summary>
-    /// Creates a post on Bluesky with text content, a URL, and multiple images.
-    /// </summary>
-    /// <param name="text">The text content of the post.</param>
-    /// <param name="url">The optional URL to include in the post.</param>
-    /// <param name="images">The collection of images to include in the post.</param>
-    /// <returns>A task representing the asynchronous post operation.</returns>
-    Task Post(string text, Uri? url, IEnumerable<Image> images);
+    Task Post(string text, Uri uri, Image image) => Post(new Models.Post { Text = text, Url = uri, Images = [image] });
 }
 
 /// <summary>
@@ -75,143 +48,45 @@ public interface IBlueskyClient
 /// </remarks>
 public class BlueskyClient : IBlueskyClient
 {
+    private readonly Uri _baseUrl;
     private readonly ILogger _logger;
-    private readonly IAuthorizationClient _authorizationClient;
     private readonly IMentionResolver _mentionResolver;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly Uri _baseUrl;
-    private readonly IReadOnlyCollection<string> _languages;
+    private readonly IAuthorizationClient _authorizationClient;
 
+    private static Uri DefaultBaseUrl => new Uri("https://bsky.social");
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BlueskyClient"/> class with the default Bluesky API base URL.
-    /// </summary>
-    /// <param name="httpClientFactory">The factory for creating HTTP clients.</param>
-    /// <param name="identifier">The user identifier (handle or email) for authentication.</param>
-    /// <param name="password">The user password for authentication.</param>
-    /// <param name="languages">The list of languages supported for content.</param>
-    /// <param name="reuseSession">Whether to reuse authentication session between requests.</param>
-    /// <param name="logger">The logger instance.</param>
     public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
-        string identifier,
-        string password,
-        IEnumerable<string> languages,
-        bool reuseSession,
-        ILogger<BlueskyClient> logger)
-        : this(httpClientFactory, identifier, password, languages, reuseSession, new Uri("https://bsky.social"), logger)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BlueskyClient"/> class with explicit dependency injection.
-    /// </summary>
-    /// <param name="httpClientFactory">The factory for creating HTTP clients.</param>
-    /// <param name="languages">The list of languages supported for content.</param>
-    /// <param name="baseUrl">The base URL of the Bluesky API.</param>
-    /// <param name="mentionResolver">The service for resolving mentions in posts.</param>
-    /// <param name="authorizationClient">The service for handling authentication.</param>
-    /// <param name="logger">The logger instance.</param>
-    public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
-        IEnumerable<string> languages,
-        Uri baseUrl,
-        IMentionResolver mentionResolver,
         IAuthorizationClient authorizationClient,
-        ILogger<BlueskyClient> logger)
+        Uri? baseUrl = null,
+        IHttpClientFactory? httpClientFactory = null,
+        IMentionResolver? mentionResolver = null,
+        ILogger<BlueskyClient>? logger = null)
     {
-        _logger = logger;
-        _httpClientFactory = httpClientFactory;
-        _baseUrl = baseUrl;
-        _languages = languages.ToFrozenSet();
-        _mentionResolver = mentionResolver;
+        _logger = logger ?? new NullLogger<BlueskyClient>();
+        _baseUrl = baseUrl ?? DefaultBaseUrl;
         _authorizationClient = authorizationClient;
+        _httpClientFactory = httpClientFactory ?? new BlueskyHttpClientFactory();
+        _mentionResolver = mentionResolver ?? new MentionResolver(_httpClientFactory, _baseUrl, _logger);
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BlueskyClient"/> class with a custom base URL.
-    /// </summary>
-    /// <param name="httpClientFactory">The factory for creating HTTP clients.</param>
-    /// <param name="identifier">The user identifier (handle or email) for authentication.</param>
-    /// <param name="password">The user password for authentication.</param>
-    /// <param name="languages">The list of languages supported for content.</param>
-    /// <param name="reuseSession">Whether to reuse authentication session between requests.</param>
-    /// <param name="baseUrl">The base URL of the Bluesky API.</param>
-    /// <param name="logger">The logger instance.</param>
     public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
         string identifier,
         string password,
-        IEnumerable<string> languages,
-        bool reuseSession,
-        Uri baseUrl,
-        ILogger<BlueskyClient> logger)
+        Uri? baseUrl = null,
+        IHttpClientFactory? httpClientFactory = null,
+        IMentionResolver? mentionResolver = null,
+        ILogger<BlueskyClient>? logger = null)
         : this(
-            httpClientFactory,
-            languages,
+            new AuthorizationClient(identifier, password, true, baseUrl ?? DefaultBaseUrl),
             baseUrl,
-            new MentionResolver(httpClientFactory, baseUrl, logger),
-            new AuthorizationClient(httpClientFactory, identifier, password, reuseSession, baseUrl), logger)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BlueskyClient"/> class with default settings.
-    /// </summary>
-    /// <param name="httpClientFactory">The factory for creating HTTP clients.</param>
-    /// <param name="identifier">The user identifier (handle or email) for authentication.</param>
-    /// <param name="password">The user password for authentication.</param>
-    public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
-        string identifier,
-        string password)
-        : this(httpClientFactory, identifier, password, ["en", "en-US"], false, NullLogger<BlueskyClient>.Instance)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BlueskyClient"/> class with a custom HTTP client factory.
-    /// </summary>
-    /// <param name="identifier">The user identifier (handle or email) for authentication.</param>
-    /// <param name="password">The user password for authentication.</param>
-    /// <param name="reuseSession">Whether to reuse authentication session between requests.</param>
-    /// <param name="logger">The logger instance.</param>
-    public BlueskyClient(string identifier, string password, bool reuseSession, ILogger<BlueskyClient> logger)
-        : this(new BlueskyHttpClientFactory(), identifier, password, ["en", "en-US"], reuseSession, logger)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BlueskyClient"/> class with minimal configuration.
-    /// </summary>
-    /// <param name="identifier">The user identifier (handle or email) for authentication.</param>
-    /// <param name="password">The user password for authentication.</param>
-    public BlueskyClient(string identifier, string password)
-        : this(identifier, password, false, NullLogger<BlueskyClient>.Instance)
+            httpClientFactory,
+            mentionResolver, logger)
     {
     }
 
     /// <inheritdoc />
-    public Task Post(string text) =>
-        Post(text, null, ImmutableList<Image>.Empty);
-
-    /// <inheritdoc />
-    public Task Post(string text, Uri url, bool autoGenerateCard = true) =>
-        Post(text, url, ImmutableList<Image>.Empty, autoGenerateCard);
-
-    /// <inheritdoc />
-    public Task Post(string text, Image image) =>
-        Post(text, null, [image], false);
-
-    /// <inheritdoc />
-    public Task Post(string text, Uri? url, Image image) =>
-        Post(text, url, [image], true);
-
-    /// <inheritdoc />
-    public Task Post(string text, Uri? url, IEnumerable<Image> images) =>
-        Post(text, url, images.ToList(), true);
-
-    private async Task Post(string text, Uri? url, IReadOnlyCollection<Image> images, bool generateCardForUrl = true)
+    public async Task Post(Models.Post post)
     {
         var session = await _authorizationClient.GetSession();
 
@@ -220,25 +95,22 @@ public class BlueskyClient : IBlueskyClient
             throw new AuthenticationException("Unable to get session");
         }
 
-        var facets = await ExtractFacets(text);
-        var embedCard = await GetEmbedCard(url, images, facets, generateCardForUrl);
-
-        // Required fields for the post
-        var post = new Post
-        {
-            Type = "app.bsky.feed.post",
-            Text = text,
-            CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
-            Langs = _languages.ToList(),
-            Facets = facets.ToList(),
-            Embed = embedCard
-        };
+        var facets = await ExtractFacets(post.Text);
+        var embedCard = await GetEmbedCard(post.Url, post.Images, facets, post.GenerateCardForUrl);
 
         var createPostRequest = new CreatePostRequest
         {
             Repo = session.Did,
             Collection = "app.bsky.feed.post",
-            Record = post,
+            Record = new Post
+            {
+                Type = "app.bsky.feed.post",
+                Text = post.Text,
+                CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
+                Langs = post.Languages.ToList(),
+                Facets = facets.ToList(),
+                Embed = embedCard
+            },
         };
 
         await CreatePost(createPostRequest);

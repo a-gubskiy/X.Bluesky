@@ -2,10 +2,11 @@ using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using X.Bluesky.Models;
+using X.Bluesky.Models.API;
 
 namespace X.Bluesky.EmbedCards;
 
-public class EmbedImageBuilder : EmbedBuilder
+internal class EmbedImageBuilder : EmbedBuilder
 {
     private readonly Uri _baseUrl;
     private readonly ILogger _logger;
@@ -24,7 +25,7 @@ public class EmbedImageBuilder : EmbedBuilder
     /// </summary>
     /// <param name="images"></param>
     /// <returns></returns>
-    public async Task<IEmbed> GetEmbedCard(IEnumerable<Image> images)
+    internal async Task<IEmbed> GetEmbedCard(IEnumerable<Image> images)
     {
         var embed = new EmbedImage();
 
@@ -51,7 +52,7 @@ public class EmbedImageBuilder : EmbedBuilder
     /// </param>
     /// <param name="mimeType"></param>
     /// <returns></returns>
-    public async Task<Thumb> UploadImage(byte[] image, string mimeType)
+    internal async Task<Thumb> UploadImage(byte[] image, string mimeType)
     {
         if (image.Length == 0)
         {

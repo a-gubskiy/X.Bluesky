@@ -1,21 +1,21 @@
 using Newtonsoft.Json;
 
-namespace X.Bluesky.Models;
+namespace X.Bluesky.Models.API;
 
-public abstract record FacetFeature
+internal abstract record FacetFeature
 {
     [JsonProperty("$type")]
     public abstract string Type { get; }
 }
 
-public record FacetFeatureLink : FacetFeature
+internal record FacetFeatureLink : FacetFeature
 {
     public Uri Uri { get; set; } = new Uri(string.Empty, UriKind.Relative);
-    
+
     public override string Type => "app.bsky.richtext.facet#link";
 }
 
-public record FacetFeatureMention : FacetFeature
+internal record FacetFeatureMention : FacetFeature
 {
     /// <summary>
     /// Important! Did must be resolved from @username to did:plc value
@@ -55,7 +55,7 @@ public record FacetFeatureMention : FacetFeature
     public override string Type => "app.bsky.richtext.facet#mention";
 }
 
-public record FacetFeatureTag : FacetFeature
+internal record FacetFeatureTag : FacetFeature
 {
     //tag: tag.replace(/^#/, ''),
 

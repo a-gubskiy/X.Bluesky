@@ -1,8 +1,8 @@
 using Newtonsoft.Json;
 
-namespace X.Bluesky.Models;
+namespace X.Bluesky.Models.API;
 
-public interface IEmbed
+internal interface IEmbed
 {
     /// <summary>
     /// Embed type

@@ -1,6 +1,6 @@
-namespace X.Bluesky.Models;
+namespace X.Bluesky.Models.API;
 
-public record CreatePostRequest
+internal record CreatePostRequest
 {
     public string Repo { get; set; }= "";
     

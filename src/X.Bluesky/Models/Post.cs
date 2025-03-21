@@ -1,27 +1,17 @@
-using Newtonsoft.Json;
+using System.Collections.Immutable;
+using X.Bluesky.Models.API;
 
 namespace X.Bluesky.Models;
 
 public record Post
 {
-    [JsonProperty("$type")]
-    public string Type { get; set; } = "";
+    public string Text { get; init; } = "";
 
-    public string Text { get; set; } = "";
+    public IReadOnlyCollection<string> Languages { get; init; } = ImmutableList<string>.Empty;
 
-    public string CreatedAt { get; set; } = "";
+    public Uri? Url { get; init; } = null;
 
-    public IEmbed? Embed { get; set; } = null;
+    public IReadOnlyCollection<Image> Images { get; init; } = ImmutableList<Image>.Empty;
 
-    public List<string> Langs { get; set; } = new();
-
-    public List<Facet>? Facets { get; set; } = null;
-}
-
-
-public record FacetIndex
-{
-    public int ByteStart { get; set; }
-
-    public int ByteEnd { get; set; }
+    public bool GenerateCardForUrl { get; init; } = true;
 }

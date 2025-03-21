@@ -1,14 +1,14 @@
 using System.Collections.Frozen;
 using System.Text;
 using System.Text.RegularExpressions;
-using X.Bluesky.Models;
+using X.Bluesky.Models.API;
 
 namespace X.Bluesky;
 
 /// <summary>
 /// FacetBuilder class to extract facets from the text for BlueSky API.
 /// </summary>
-public class FacetBuilder
+internal class FacetBuilder
 {
     private readonly Regex _featureTagRegex;
     private readonly Regex _featureMentionRegex;
@@ -65,7 +65,7 @@ public class FacetBuilder
         return result;
     }
 
-    public Facet CreateFacet(int start, int end, FacetFeature facetFeature)
+    private Facet CreateFacet(int start, int end, FacetFeature facetFeature)
     {
         var result = new Facet
         {
@@ -85,7 +85,7 @@ public class FacetBuilder
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    public IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
+    private  IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
     {
         var matches = _featureTagRegex.Matches(text).ToFrozenSet();
 
@@ -97,7 +97,7 @@ public class FacetBuilder
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    public IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
+    internal  IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
     {
         var matches = _featureMentionRegex.Matches(text).ToFrozenSet();
 
@@ -109,7 +109,7 @@ public class FacetBuilder
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    public IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
+    private  IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
     {
         var matches = _featureLinkRegex.Matches(text).ToFrozenSet();
 
