@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging;
 using X.Bluesky.Models;
 using X.Bluesky.Models.API;
+using X.Web.MetaExtractor;
+using X.Web.MetaExtractor.ContentLoaders.HttpClient;
+using X.Web.MetaExtractor.LanguageDetectors;
 
 namespace X.Bluesky.EmbedCards;
 
@@ -10,13 +13,30 @@ internal class EmbedExternalBuilder : EmbedBuilder
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly EmbedImageBuilder _embedImageBuilder;
+    private readonly IExtractor _extractor;
 
     public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, Uri baseUrl, ILogger logger)
+        : this(
+            httpClientFactory,
+            new Extractor("", new HttpClientPageContentLoader(httpClientFactory), new LanguageDetector()),
+            session,
+            baseUrl,
+            logger)
+    {
+    }
+
+    internal EmbedExternalBuilder(
+        IHttpClientFactory httpClientFactory,
+        IExtractor extractor,
+        Session session,
+        Uri baseUrl,
+        ILogger logger)
         : base(session)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _fileTypeHelper = new FileTypeHelper(logger);
+        _extractor = extractor;
         _embedImageBuilder = new EmbedImageBuilder(httpClientFactory, session, baseUrl, logger);
     }
 
@@ -27,8 +47,7 @@ internal class EmbedExternalBuilder : EmbedBuilder
     /// <returns></returns>
     internal async Task<IEmbed> GetEmbedCard(Uri url)
     {
-        var extractor = new Web.MetaExtractor.Extractor();
-        var metadata = await extractor.ExtractAsync(url);
+        var metadata = await _extractor.ExtractAsync(url);
 
         var card = new External
         {

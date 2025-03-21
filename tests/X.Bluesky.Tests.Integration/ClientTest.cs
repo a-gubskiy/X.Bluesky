@@ -29,7 +29,7 @@ public class ClientTest
         await client.Post(text, uri);
     }
 
-    [Fact()]
+    [Fact(Skip = "On demand")]
     public async Task CheckImageUpload_Sending()
     {
         IBlueskyClient client = new BlueskyClient(_identifier, _password);
