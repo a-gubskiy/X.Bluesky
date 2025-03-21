@@ -2,14 +2,8 @@ using System.Text;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using X.Bluesky.Models;
-using X.Bluesky.Models.API;
 
-namespace X.Bluesky;
-
-public interface IAuthorizationClient
-{
-    Task<Session> GetSession();
-}
+namespace X.Bluesky.Authorization;
 
 public class AuthorizationClient : IAuthorizationClient
 {
@@ -20,22 +14,18 @@ public class AuthorizationClient : IAuthorizationClient
     /// <summary>
     /// Session reuse flag
     /// </summary>
-    private readonly bool _reuseSession;
-
+    // private readonly bool _reuseSession;
     private readonly Uri _baseUri;
-
-    private Session? _session;
-    private DateTime? _sessionRefreshedAt;
 
     [PublicAPI]
     public AuthorizationClient(string identifier, string password)
-        : this(new BlueskyHttpClientFactory(), identifier, password, false, new Uri("https://bsky.social"))
+        : this(new BlueskyHttpClientFactory(), identifier, password, new Uri("https://bsky.social"))
     {
     }
 
     [PublicAPI]
-    public AuthorizationClient(string identifier, string password, bool reuseSession, Uri baseUri)
-        : this(new BlueskyHttpClientFactory(), identifier, password, reuseSession, baseUri)
+    public AuthorizationClient(string identifier, string password, Uri baseUri)
+        : this(new BlueskyHttpClientFactory(), identifier, password, baseUri)
     {
     }
 
@@ -44,10 +34,8 @@ public class AuthorizationClient : IAuthorizationClient
         IHttpClientFactory httpClientFactory,
         string identifier,
         string password,
-        bool reuseSession,
         Uri baseUri)
     {
-        _reuseSession = reuseSession;
         _baseUri = baseUri;
         _httpClientFactory = httpClientFactory;
         _identifier = identifier;
@@ -56,23 +44,15 @@ public class AuthorizationClient : IAuthorizationClient
 
     public async Task<Session> GetSession()
     {
-        if (_reuseSession && _session != null
-                          && _sessionRefreshedAt != null
-                          && _sessionRefreshedAt.Value.AddMinutes(90) > DateTime.UtcNow)
-        {
-            // Reuse existing session
-            return _session;
-        }
-
         var requestData = new
         {
             identifier = _identifier,
             password = _password
         };
 
-        var json = JsonConvert.SerializeObject(requestData);
-
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        const string mediaType = "application/json";
+        
+        var content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, mediaType);
 
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -82,11 +62,10 @@ public class AuthorizationClient : IAuthorizationClient
 
         response.EnsureSuccessStatusCode();
 
-        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var json = await response.Content.ReadAsStringAsync();
 
-        _session = JsonConvert.DeserializeObject<Session>(jsonResponse)!;
-        _sessionRefreshedAt = DateTime.UtcNow;
+        var session = JsonConvert.DeserializeObject<Session>(json)!;
 
-        return _session;
+        return session;
     }
 }

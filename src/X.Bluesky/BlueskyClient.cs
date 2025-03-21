@@ -7,8 +7,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using X.Bluesky.Authorization;
 using X.Bluesky.EmbedCards;
+using X.Bluesky.Models;
 using X.Bluesky.Models.API;
+using Post = X.Bluesky.Models.API.Post;
 
 namespace X.Bluesky;
 
@@ -109,7 +112,7 @@ public class BlueskyClient : IBlueskyClient
         IHttpClientFactory? httpClientFactory = null,
         ILogger<BlueskyClient>? logger = null)
         : this(
-            new AuthorizationClient(identifier, password, true, baseUrl ?? DefaultBaseUrl),
+            new ReusableAuthorizationClient(new AuthorizationClient(identifier, password, baseUrl ?? DefaultBaseUrl)),
             baseUrl,
             httpClientFactory,
             logger)

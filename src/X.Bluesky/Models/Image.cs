@@ -1,4 +1,4 @@
-namespace X.Bluesky.Models.API;
+namespace X.Bluesky.Models;
 
 /// <summary>
 /// Represents an image that can be attached to a Bluesky post.

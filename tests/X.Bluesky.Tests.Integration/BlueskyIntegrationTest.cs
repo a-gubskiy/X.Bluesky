@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
+using X.Bluesky.Authorization;
 using Xunit;
 
 namespace X.Bluesky.Tests.Integration;

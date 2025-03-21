@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using X.Bluesky.Models;
 using X.Bluesky.Models.API;
 using Xunit;
 
