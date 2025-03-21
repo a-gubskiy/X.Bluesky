@@ -8,10 +8,15 @@ By leveraging the Bluesky API, this project allows for straightforward integrati
 
 ## Features
 
-- Post messages directly to Bluesky
-- Attach links to posts, allowing for page previews within the Bluesky feed
+- Post text messages directly to Bluesky
+- Attach images to posts with support for alt text
+- Add URLs to posts with automatic preview card generation
+- Specify post language settings
 - Authenticate with Bluesky using an identifier and password
-- Automatically generate tags, mentions and url cards 
+- Support for session management and reuse
+- Automatically generate tags, mentions and URL cards
+- Customizable base URI for different Bluesky instances
+- Embed external content with rich preview cards
 
 ## Getting Started
 
@@ -22,19 +27,99 @@ By leveraging the Bluesky API, this project allows for straightforward integrati
 
 ### Installation
 
-To use the X.Bluesky library in your project, include it as a dependency in your project's file (e.g., `csproj`). 
+To use the X.Bluesky library in your project, include it as a dependency in your project's file (e.g., `csproj`).
+
 See the [NuGet package page](https://www.nuget.org/packages/X.Bluesky/) for the latest version.
 
 ### Usage
+
+#### Basic Usage
 
 ```csharp
 var identifier = "your.bluesky.identifier";
 var password = "your-password-here";
 
 IBlueskyClient client = new BlueskyClient(identifier, password);
-
-await client.Post($"Read this post from #devdigest: https://yourlink.com/post/123");
-
-await client.Post($"Read this post!", new Uri("https://yourlink.com/post/123");
 ```
 
+
+```csharp
+// Simple text post
+await client.Post("Hello from X.Bluesky!");
+
+// Post with hashtags
+await client.Post("Read this post from #devdigest: https://yourlink.com/post/123");
+
+// Post with URL (generates preview card)
+await client.Post("Read this post!", new Uri("https://yourlink.com/post/123"));
+```
+
+```csharp
+// Create a client
+var client = new BlueskyClient(
+identifier,
+password,
+reuseSession: true,
+baseUri: new Uri("https://bsky.social"));
+```
+
+```csharp
+// Create a fully customized post
+var post = new Post
+{
+    Text = "Check out this image with my thoughts on #AI development!",
+    Images = new[]
+    {
+        new Image
+        {
+            Content = File.ReadAllBytes("path/to/image.jpg"),
+            MimeType = "image/jpeg",
+            Alt = "A diagram showing AI architecture"
+        }
+    },
+    Url = new Uri("https://yourblog.com/ai-article"),
+    Languages = new[] { "en" },
+    GenerateCardForUrl = true  // Generate a rich preview card for the URL
+};
+```
+
+```csharp 
+// Post to Bluesky
+await client.Post(post);
+```
+
+Advanced Usage with Post Object
+The core method of the library is Post(Models.Post post) which gives you full control over your post content:
+
+```csharp
+// Create a client
+var client = new BlueskyClient(
+identifier,
+password,
+reuseSession: true,
+baseUri: new Uri("https://bsky.social"));
+
+// Create a fully customized post
+var post = new Post
+{
+    Text = "Check out this image with my thoughts on #AI development!",
+    Images = new[]
+    {
+        new Image
+        {
+            Content = File.ReadAllBytes("path/to/image.jpg"),
+            MimeType = "image/jpeg",
+            Alt = "A diagram showing AI architecture"
+        }
+    },
+    Url = new Uri("https://yourblog.com/ai-article"),
+    Languages = new[] { "en" },
+    GenerateCardForUrl = true  // Generate a rich preview card for the URL
+};
+
+// Post to Bluesky
+await client.Post(post);
+```
+
+The Post object allows you to combine multiple elements like text, images, URLs, and metadata in a single post. 
+This is especially useful for more complex posts that require fine-grained control over the content and presentation.

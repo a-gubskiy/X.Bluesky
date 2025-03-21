@@ -6,7 +6,9 @@ using X.Bluesky.Models.API;
 namespace X.Bluesky;
 
 /// <summary>
-/// FacetBuilder class to extract facets from the text for BlueSky API.
+/// Builds facets for Bluesky posts by detecting hashtags, mentions, and links in text.
+/// Facets are metadata that describe special features within the text, such as mentions, links, or tags,
+/// along with their byte positions in the UTF-8 encoded text.
 /// </summary>
 internal class FacetBuilder
 {
@@ -15,7 +17,8 @@ internal class FacetBuilder
     private readonly Regex _featureLinkRegex;
 
     /// <summary>
-    /// Create a new instance of FacetBuilder
+    /// Initializes a new instance of the <see cref="FacetBuilder"/> class
+    /// with compiled regular expressions for detecting hashtags, mentions, and links.
     /// </summary>
     public FacetBuilder()
     {
@@ -25,10 +28,10 @@ internal class FacetBuilder
     }
 
     /// <summary>
-    /// Get facets from the text
+    /// Extracts facets from the given text by detecting hashtags, mentions, and links.
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">The text content to extract facets from.</param>
+    /// <returns>A collection of facets with their byte positions and features.</returns>
     public IReadOnlyCollection<Facet> GetFacets(string text)
     {
         var result = new List<Facet>();
@@ -65,6 +68,13 @@ internal class FacetBuilder
         return result;
     }
 
+    /// <summary>
+    /// Creates a facet with the given byte positions and feature.
+    /// </summary>
+    /// <param name="start">The starting byte position in UTF-8 encoding.</param>
+    /// <param name="end">The ending byte position in UTF-8 encoding.</param>
+    /// <param name="facetFeature">The feature to associate with this facet (link, mention, or tag).</param>
+    /// <returns>A new facet with the specified properties.</returns>
     private Facet CreateFacet(int start, int end, FacetFeature facetFeature)
     {
         var result = new Facet
@@ -81,11 +91,11 @@ internal class FacetBuilder
     }
 
     /// <summary>
-    /// Detect hashtags
+    /// Finds all hashtags in the given text.
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
-    private  IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
+    /// <param name="text">The text to search for hashtags.</param>
+    /// <returns>A collection of regex matches for hashtags.</returns>
+    private IReadOnlyCollection<Match> GetFeatureTagMatches(string text)
     {
         var matches = _featureTagRegex.Matches(text).ToFrozenSet();
 
@@ -93,11 +103,11 @@ internal class FacetBuilder
     }
 
     /// <summary>
-    /// Detect mentions
+    /// Finds all mentions in the given text.
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
-    internal  IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
+    /// <param name="text">The text to search for mentions.</param>
+    /// <returns>A collection of regex matches for mentions.</returns>
+    internal IReadOnlyCollection<Match> GetFeatureMentionMatches(string text)
     {
         var matches = _featureMentionRegex.Matches(text).ToFrozenSet();
 
@@ -105,11 +115,11 @@ internal class FacetBuilder
     }
 
     /// <summary>
-    /// Detect links
+    /// Finds all links in the given text.
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
-    private  IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
+    /// <param name="text">The text to search for links.</param>
+    /// <returns>A collection of regex matches for links.</returns>
+    private IReadOnlyCollection<Match> GetFeatureLinkMatches(string text)
     {
         var matches = _featureLinkRegex.Matches(text).ToFrozenSet();
 
@@ -117,11 +127,15 @@ internal class FacetBuilder
     }
 
     /// <summary>
-    /// Convert character index to UTF-8 byte index.
+    /// Calculates the byte position of a character in the UTF-8 encoded version of the text.
     /// </summary>
-    /// <param name="text">The text to convert.</param>
-    /// <param name="index">The character index in the text.</param>
-    /// <returns>The corresponding UTF-8 byte index.</returns>
+    /// <param name="text">The text to analyze.</param>
+    /// <param name="index">The character index in the string.</param>
+    /// <returns>The byte position in the UTF-8 encoded text.</returns>
+    /// <remarks>
+    /// This is needed because Bluesky's API requires byte positions in UTF-8 encoding,
+    /// but C# strings are UTF-16 encoded.
+    /// </remarks>
     private int GetUtf8BytePosition(string text, int index)
     {
         var substring = text[..index];

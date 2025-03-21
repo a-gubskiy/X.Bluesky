@@ -54,12 +54,6 @@ public class AuthorizationClient : IAuthorizationClient
         _password = password;
     }
 
-    /// <summary>
-    /// Authorize in Bluesky
-    /// </summary>
-    /// <returns>
-    /// Instance of authorized session
-    /// </returns>
     public async Task<Session> GetSession()
     {
         if (_reuseSession && _session != null
