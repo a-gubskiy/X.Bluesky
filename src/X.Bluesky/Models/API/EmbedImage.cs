@@ -1,8 +1,8 @@
 using Newtonsoft.Json;
 
-namespace X.Bluesky.Models;
+namespace X.Bluesky.Models.API;
 
-public class EmbedImage : IEmbed
+internal class EmbedImage : IEmbed
 {
     [JsonProperty("$type")]
     public string Type => "app.bsky.embed.images";
@@ -10,7 +10,7 @@ public class EmbedImage : IEmbed
     public List<ImageData> Images { get; set; } = new();
 }
 
-public record ImageData
+internal record ImageData
 {
     public string Alt { get; set; } = "";
 
@@ -19,7 +19,7 @@ public record ImageData
     public AspectRatio? AspectRatio { get; set; } = null;
 }
 
-public record Thumb
+internal record Thumb
 {
     [JsonProperty("$type")]
     public string Type { get; set; } = "";
@@ -34,13 +34,13 @@ public record Thumb
     public int Size { get; set; }
 }
 
-public class ThumbRef
+internal class ThumbRef
 {
     [JsonProperty("$link")]
     public string Link { get; set; } = "";
 }
 
-public record AspectRatio
+internal record AspectRatio
 {
     public int Width { get; set; }
 

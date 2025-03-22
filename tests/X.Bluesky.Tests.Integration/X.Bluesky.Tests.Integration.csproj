@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
@@ -14,7 +14,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\X.Bluesky\X.Bluesky.csproj" />
+      <ProjectReference Include="..\..\src\X.Bluesky\X.Bluesky.csproj" />
     </ItemGroup>
-    
+
+
 </Project>

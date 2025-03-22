@@ -2,9 +2,10 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using X.Bluesky.Models;
+using X.Bluesky.Models.API;
 using Xunit;
 
-namespace X.Bluesky.Tests;
+namespace X.Bluesky.Tests.Integration;
 
 public class ClientTest
 {
@@ -14,7 +15,7 @@ public class ClientTest
     [Fact(Skip = "On demand")]
     public async Task CheckFacets_Sending()
     {
-        var client = new BlueskyClient(_identifier, _password);
+        IBlueskyClient client = new BlueskyClient(_identifier, _password);
 
         var sb = new StringBuilder();
         sb.AppendLine("Microsoft’s Vision for 2025 and Beyond: Copilot, Responsible AI, Security and Multicloud");
@@ -29,11 +30,10 @@ public class ClientTest
         await client.Post(text, uri);
     }
 
-    [Fact()]
+    [Fact(Skip = "On demand")]
     public async Task CheckImageUpload_Sending()
     {
-        var client = new BlueskyClient(_identifier, _password);
-
+        IBlueskyClient client = new BlueskyClient(_identifier, _password);
 
         var sb = new StringBuilder();
         sb.AppendLine("Microsoft’s Vision for 2025 and Beyond: Copilot, Responsible AI, Security and Multicloud");
@@ -85,6 +85,11 @@ public class ClientTest
             MimeType = "image/jpg"
         };
 
-        await client.Post(text, uri, [image1, image2]);
+        await client.Post(new X.Bluesky.Models.Post
+        {
+            Text = text,
+            Url = uri,
+            Images = [image1, image2]
+        });
     }
 }

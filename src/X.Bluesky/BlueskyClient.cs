@@ -1,6 +1,4 @@
-﻿using System.Collections.Frozen;
-using System.Collections.Immutable;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
@@ -9,203 +7,200 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using X.Bluesky.Authorization;
 using X.Bluesky.EmbedCards;
 using X.Bluesky.Models;
+using X.Bluesky.Models.API;
+using Post = X.Bluesky.Models.API.Post;
 
 namespace X.Bluesky;
 
+/// <summary>
+/// Defines the core functionality for a Bluesky client that can post content to the Bluesky social network.
+/// </summary>
 [PublicAPI]
 public interface IBlueskyClient
 {
     /// <summary>
-    /// Create post
+    /// Posts content to the Bluesky social network.
     /// </summary>
-    /// <param name="text">
-    /// Post text
-    /// </param>
-    /// <returns></returns>
-    Task Post(string text);
+    /// <param name="post">The post object containing all the content and metadata to be published.</param>
+    /// <returns>A task representing the asynchronous operation of posting to Bluesky.</returns>
+    Task Post(Models.Post post);
 
     /// <summary>
-    /// Create post with link
+    /// Posts a text-only message to the Bluesky social network.
     /// </summary>
-    /// <param name="text">
-    /// Post text
-    /// </param>
-    /// <param name="url">
-    /// Url of attachment page
-    /// </param>
-    /// <returns></returns>
-    Task Post(string text, Uri url);
+    /// <param name="text">The text content to post.</param>
+    /// <returns>A task representing the asynchronous operation of posting to Bluesky.</returns>
+    Task Post(string text) => Post(new Models.Post { Text = text });
 
     /// <summary>
-    /// Create post with image
+    /// Posts a message with a URL to the Bluesky social network.
     /// </summary>
-    /// <param name="text"></param>
-    /// <param name="image"></param>
-    /// <returns></returns>
-    Task Post(string text, Image image);
+    /// <param name="text">The text content to post.</param>
+    /// <param name="uri">The URL to include in the post.</param>
+    /// <returns>A task representing the asynchronous operation of posting to Bluesky.</returns>
+    Task Post(string text, Uri uri) => Post(new Models.Post { Text = text, Url = uri });
 
     /// <summary>
-    /// Create post with link and image
+    /// Posts a message with an image to the Bluesky social network.
     /// </summary>
-    /// <param name="text"></param>
-    /// <param name="url"></param>
-    /// <param name="image"></param>
-    /// <returns></returns>
-    Task Post(string text, Uri? url, Image image);
-    
+    /// <param name="text">The text content to post.</param>
+    /// <param name="image">The image to include in the post.</param>
+    /// <returns>A task representing the asynchronous operation of posting to Bluesky.</returns>
+    Task Post(string text, Image image) => Post(new Models.Post { Text = text, Images = [image] });
+
     /// <summary>
-    /// Create post with link and images
+    /// Posts a message with both a URL and an image to the Bluesky social network.
     /// </summary>
-    /// <param name="text"></param>
-    /// <param name="url"></param>
-    /// <param name="images"></param>
-    /// <returns></returns>
-    Task Post(string text, Uri? url, IEnumerable<Image> images);
+    /// <param name="text">The text content to post.</param>
+    /// <param name="uri">The URL to include in the post.</param>
+    /// <param name="image">The image to include in the post.</param>
+    /// <returns>A task representing the asynchronous operation of posting to Bluesky.</returns>
+    Task Post(string text, Uri uri, Image image) => Post(new Models.Post { Text = text, Url = uri, Images = [image] });
 }
 
+/// <summary>
+/// Implementation of <see cref="IBlueskyClient"/> that provides functionality for posting content to the Bluesky social network.
+/// </summary>
 public class BlueskyClient : IBlueskyClient
 {
+    private readonly Uri _baseUrl;
     private readonly ILogger _logger;
-    private readonly IAuthorizationClient _authorizationClient;
     private readonly IMentionResolver _mentionResolver;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly Uri _baseUrl;
-    private readonly IReadOnlyCollection<string> _languages;
+    private readonly IAuthorizationClient _authorizationClient;
 
     /// <summary>
-    /// Creates a new instance of the Bluesky client
+    /// Gets the default Bluesky API base URL (https://bsky.social).
     /// </summary>
-    /// <param name="httpClientFactory"></param>
-    /// <param name="identifier">Bluesky identifier</param>
-    /// <param name="password">Bluesky application password</param>
-    /// <param name="languages">Post languages</param>
-    /// <param name="reuseSession">Reuse session</param>
-    /// <param name="logger"></param>
-    public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
-        string identifier,
-        string password,
-        IEnumerable<string> languages,
-        bool reuseSession,
-        ILogger<BlueskyClient> logger)
-        : this(httpClientFactory, identifier, password, languages, reuseSession, new Uri("https://bsky.social"), logger)
-    {
-    }
+    private static Uri DefaultBaseUrl => new Uri("https://bsky.social");
 
     /// <summary>
-    /// Creates a new instance of the Bluesky client
+    /// Initializes a new instance of the <see cref="BlueskyClient"/> class using an authorization client.
     /// </summary>
-    /// <param name="httpClientFactory"></param>
-    /// <param name="languages">Post languages</param>
-    /// <param name="baseUrl">Bluesky base url</param>
-    /// <param name="logger"></param>
-    /// <param name="mentionResolver"></param>
-    /// <param name="authorizationClient"></param>
+    /// <param name="authorizationClient">The client used for handling authentication with Bluesky.</param>
+    /// <param name="baseUrl">The base URL for the Bluesky API. If null, defaults to https://bsky.social.</param>
+    /// <param name="httpClientFactory">Factory for creating HTTP clients. If null, a default implementation is used.</param>
+    /// <param name="logger">Logger for recording diagnostic information. If null, a null logger is used.</param>
     public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
-        IEnumerable<string> languages,
-        Uri baseUrl,
-        IMentionResolver mentionResolver,
         IAuthorizationClient authorizationClient,
-        ILogger<BlueskyClient> logger)
+        Uri? baseUrl = null,
+        IHttpClientFactory? httpClientFactory = null,
+        ILogger<BlueskyClient>? logger = null)
     {
-        _logger = logger;
-        _httpClientFactory = httpClientFactory;
-        _baseUrl = baseUrl;
-        _languages = languages.ToFrozenSet();
-        _mentionResolver = mentionResolver;
+        _logger = logger ?? new NullLogger<BlueskyClient>();
+        _baseUrl = baseUrl ?? DefaultBaseUrl;
         _authorizationClient = authorizationClient;
+        _httpClientFactory = httpClientFactory ?? new BlueskyHttpClientFactory();
+        _mentionResolver = new MentionResolver(_httpClientFactory, _baseUrl, _logger);
     }
 
     /// <summary>
-    /// Creates a new instance of the Bluesky client
+    /// Initializes a new instance of the <see cref="BlueskyClient"/> class using direct authentication credentials.
     /// </summary>
-    /// <param name="httpClientFactory"></param>
-    /// <param name="identifier">User identifier</param>
-    /// <param name="password">User password or application password</param>
-    /// <param name="languages">Post languages</param>
-    /// <param name="reuseSession">Indicates whether to reuse the session</param>
-    /// <param name="baseUrl">Bluesky base url</param>>
-    /// <param name="logger">Logger</param>
+    /// <param name="identifier">The Bluesky user identifier (username or email).</param>
+    /// <param name="password">The password for the Bluesky account.</param>
+    /// <param name="baseUrl">The base URL for the Bluesky API. If null, defaults to https://bsky.social.</param>
+    /// <param name="httpClientFactory">Factory for creating HTTP clients. If null, a default implementation is used.</param>
+    /// <param name="logger">Logger for recording diagnostic information. If null, a null logger is used.</param>
     public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
         string identifier,
         string password,
-        IEnumerable<string> languages,
-        bool reuseSession,
-        Uri baseUrl,
-        ILogger<BlueskyClient> logger)
+        Uri? baseUrl = null,
+        IHttpClientFactory? httpClientFactory = null,
+        ILogger<BlueskyClient>? logger = null)
         : this(
-            httpClientFactory,
-            languages,
+            new ReusableAuthorizationClient(new AuthorizationClient(identifier, password, baseUrl ?? DefaultBaseUrl)),
             baseUrl,
-            new MentionResolver(httpClientFactory, baseUrl, logger),
-            new AuthorizationClient(httpClientFactory, identifier, password, reuseSession, baseUrl), logger)
-    {
-    }
-
-    /// <summary>
-    /// Creates a new instance of the Bluesky client
-    /// </summary>
-    /// <param name="httpClientFactory"></param>
-    /// <param name="identifier">Bluesky identifier</param>
-    /// <param name="password">Bluesky application password</param>
-    public BlueskyClient(
-        IHttpClientFactory httpClientFactory,
-        string identifier,
-        string password)
-        : this(httpClientFactory, identifier, password, ["en", "en-US"], false, NullLogger<BlueskyClient>.Instance)
-    {
-    }
-
-    /// <summary>
-    /// Creates a new instance of the Bluesky client
-    /// </summary>
-    /// <param name="identifier">Bluesky identifier</param>
-    /// <param name="password">Bluesky application password</param>
-    /// <param name="reuseSession">Reuse session</param>
-    /// <param name="logger"></param>
-    public BlueskyClient(string identifier, string password, bool reuseSession, ILogger<BlueskyClient> logger)
-        : this(new BlueskyHttpClientFactory(), identifier, password, ["en", "en-US"], reuseSession, logger)
-    {
-    }
-
-    /// <summary>
-    /// Creates a new instance of the Bluesky client
-    /// </summary>
-    /// <param name="identifier">Bluesky identifier</param>
-    /// <param name="password">Bluesky application password</param>
-    public BlueskyClient(string identifier, string password)
-        : this(identifier, password, false, NullLogger<BlueskyClient>.Instance)
+            httpClientFactory,
+            logger)
     {
     }
 
     /// <inheritdoc />
-    public Task Post(string text) => Post(text, null, ImmutableList<Image>.Empty);
-
-    /// <inheritdoc />
-    public Task Post(string text, Uri url) => Post(text, url, ImmutableList<Image>.Empty);
-
-    /// <inheritdoc />
-    public Task Post(string text, Image image) => Post(text, null, image);
-    
-    /// <inheritdoc />
-    public Task Post(string text, Uri? url, Image image) => Post(text, url, ImmutableList.Create(image));
-
-    /// <inheritdoc />
-    public async Task Post(string text, Uri? url, IEnumerable<Image> images)
+    public async Task Post(Models.Post post)
     {
         var session = await _authorizationClient.GetSession();
 
         if (session == null)
         {
-            throw new AuthenticationException();
+            throw new AuthenticationException("Unable to get session");
         }
 
-        // Fetch the current time in ISO 8601 format, with "Z" to denote UTC
-        var now = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+        var facets = await ExtractFacets(post.Text);
+        var embedCard = await GetEmbedCard(post.Url, post.Images, facets, post.GenerateCardForUrl);
+
+        var createPostRequest = new CreatePostRequest
+        {
+            Repo = session.Did,
+            Collection = "app.bsky.feed.post",
+            Record = new Post
+            {
+                Type = "app.bsky.feed.post",
+                Text = post.Text,
+                CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
+                Langs = post.Languages.ToList(),
+                Facets = facets.ToList(),
+                Embed = embedCard
+            },
+        };
+
+        await CreatePost(createPostRequest);
+    }
+
+    /// <summary>
+    /// Builds an embed card for the post based on URLs and images.
+    /// </summary>
+    /// <param name="url">The explicit URL to create a card for, if any.</param>
+    /// <param name="images">Collection of images to embed in the post.</param>
+    /// <param name="facets">The facets extracted from the post text, which may contain URLs.</param>
+    /// <param name="generateCardForUrl">Whether to generate a card for URLs found in the post.</param>
+    /// <returns>An embed card object if one could be created; otherwise, null.</returns>
+    private async Task<IEmbed?> GetEmbedCard(
+        Uri? url, IReadOnlyCollection<Image> images,
+        IReadOnlyCollection<Facet> facets,
+        bool generateCardForUrl)
+    {
+        var session = await _authorizationClient.GetSession();
+
+        if (images.Any())
+        {
+            var embedImageBuilder = new EmbedImageBuilder(_httpClientFactory, session, _baseUrl, _logger);
+
+            return await embedImageBuilder.GetEmbedCard(images);
+        }
+
+        if (!generateCardForUrl)
+        {
+            return null;
+        }
+
+        //If no image was defined we're trying to get link from facets
+        if (url == null)
+        {
+            //If no link was defined we're trying to get link from facets 
+            url = ExtractUrlFromFacets(facets);
+        }
+
+        if (url == null)
+        {
+            return null;
+        }
+
+        var embedExternalBuilder = new EmbedExternalBuilder(_httpClientFactory, session, _baseUrl, _logger);
+
+        return await embedExternalBuilder.GetEmbedCard(url);
+    }
+
+    /// <summary>
+    /// Extracts facets (special features like mentions, links, and hashtags) from the post text.
+    /// </summary>
+    /// <param name="text">The text content to extract facets from.</param>
+    /// <returns>A collection of facets with their positions and features.</returns>
+    private async Task<IReadOnlyCollection<Facet>> ExtractFacets(string text)
+    {
         var facetBuilder = new FacetBuilder();
 
         var facets = facetBuilder.GetFacets(text);
@@ -214,64 +209,32 @@ public class BlueskyClient : IBlueskyClient
         {
             foreach (var facetFeature in facet.Features)
             {
-                if (facetFeature is FacetFeatureMention facetFeatureMention)
+                if (facetFeature is not FacetFeatureMention facetFeatureMention)
                 {
-                    var resolveDid = await _mentionResolver.ResolveMention(facetFeatureMention.Did);
-
-                    facetFeatureMention.ResolveDid(resolveDid);
+                    continue;
                 }
+
+                var resolveDid = await _mentionResolver.ResolveMention(facetFeatureMention.Did);
+
+                facetFeatureMention.ResolveDid(resolveDid);
             }
         }
 
-        // Required fields for the post
-        var post = new Post
-        {
-            Type = "app.bsky.feed.post",
-            Text = text,
-            CreatedAt = now,
-            Langs = _languages.ToList(),
-            Facets = facets.ToList()
-        };
+        return facets;
+    }
 
-        if (images.Any())
-        {
-            var embedBuilder = new EmbedImageBuilder(_httpClientFactory, session, _baseUrl, _logger);
-
-            post.Embed = await embedBuilder.GetEmbedCard(images);
-        }
-        else
-        {
-            //If no image was defined we're trying to get link from facets
-            
-            if (url == null)
-            {
-                //If no link was defined we're trying to get link from facets 
-                url = facets
-                    .SelectMany(facet => facet.Features)
-                    .Where(feature => feature is FacetFeatureLink)
-                    .Cast<FacetFeatureLink>()
-                    .Select(f => f.Uri)
-                    .FirstOrDefault();
-            }
-
-            if (url != null)
-            {
-                var embedBuilder = new EmbedExternalBuilder(_httpClientFactory, session, _baseUrl, _logger);
-
-                post.Embed = await embedBuilder.GetEmbedCard(url);
-            }
-        }
-
+    /// <summary>
+    /// Sends a create post request to the Bluesky API.
+    /// </summary>
+    /// <param name="createPostRequest">The request object containing all post details.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
+    private async Task CreatePost(CreatePostRequest createPostRequest)
+    {
+        var session = await _authorizationClient.GetSession();
         var requestUri = $"{_baseUrl.ToString().TrimEnd('/')}/xrpc/com.atproto.repo.createRecord";
 
-        var requestData = new CreatePostRequest
-        {
-            Repo = session.Did,
-            Collection = "app.bsky.feed.post",
-            Record = post,
-        };
-
-        var jsonRequest = JsonConvert.SerializeObject(requestData, Formatting.Indented, new JsonSerializerSettings
+        var jsonRequest = JsonConvert.SerializeObject(createPostRequest, Formatting.Indented, new JsonSerializerSettings
         {
             Formatting = Formatting.Indented,
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -298,5 +261,20 @@ public class BlueskyClient : IBlueskyClient
         response.EnsureSuccessStatusCode();
     }
 
-    
+    /// <summary>
+    /// Extracts the first URL found in a collection of facets.
+    /// </summary>
+    /// <param name="facets">The collection of facets to search for URLs.</param>
+    /// <returns>The first URL found, or null if none are present.</returns>
+    private static Uri? ExtractUrlFromFacets(IReadOnlyCollection<Facet> facets)
+    {
+        var url = facets
+            .SelectMany(facet => facet.Features)
+            .Where(feature => feature is FacetFeatureLink)
+            .Cast<FacetFeatureLink>()
+            .Select(f => f.Uri)
+            .FirstOrDefault();
+
+        return url;
+    }
 }

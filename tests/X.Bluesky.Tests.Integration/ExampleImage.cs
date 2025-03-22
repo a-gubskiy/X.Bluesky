@@ -1,4 +1,4 @@
-namespace X.Bluesky.Tests;
+namespace X.Bluesky.Tests.Integration;
 
 public static class ExampleImage
 {

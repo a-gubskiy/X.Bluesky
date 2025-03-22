@@ -1,21 +1,42 @@
 using Microsoft.Extensions.Logging;
 using X.Bluesky.Models;
+using X.Bluesky.Models.API;
+using X.Web.MetaExtractor;
+using X.Web.MetaExtractor.ContentLoaders.HttpClient;
+using X.Web.MetaExtractor.LanguageDetectors;
 
 namespace X.Bluesky.EmbedCards;
 
-public class EmbedExternalBuilder : EmbedBuilder
+internal class EmbedExternalBuilder : EmbedBuilder
 {
     private readonly ILogger _logger;
     private readonly FileTypeHelper _fileTypeHelper;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly EmbedImageBuilder _embedImageBuilder;
+    private readonly IExtractor _extractor;
 
     public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, Uri baseUrl, ILogger logger)
+        : this(
+            httpClientFactory,
+            new Extractor("", new HttpClientPageContentLoader(httpClientFactory), new LanguageDetector()),
+            session,
+            baseUrl,
+            logger)
+    {
+    }
+
+    internal EmbedExternalBuilder(
+        IHttpClientFactory httpClientFactory,
+        IExtractor extractor,
+        Session session,
+        Uri baseUrl,
+        ILogger logger)
         : base(session)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _fileTypeHelper = new FileTypeHelper(logger);
+        _extractor = extractor;
         _embedImageBuilder = new EmbedImageBuilder(httpClientFactory, session, baseUrl, logger);
     }
 
@@ -24,10 +45,9 @@ public class EmbedExternalBuilder : EmbedBuilder
     /// </summary>
     /// <param name="url"></param>
     /// <returns></returns>
-    public async Task<IEmbed> GetEmbedCard(Uri url)
+    internal async Task<IEmbed> GetEmbedCard(Uri url)
     {
-        var extractor = new Web.MetaExtractor.Extractor();
-        var metadata = await extractor.ExtractAsync(url);
+        var metadata = await _extractor.ExtractAsync(url);
 
         var card = new External
         {
@@ -55,12 +75,10 @@ public class EmbedExternalBuilder : EmbedBuilder
             }
         }
 
-        var embed = new EmbedExternal
+        return new EmbedExternal
         {
             External = card
         };
-
-        return embed;
     }
 
     /// <summary>
@@ -80,7 +98,7 @@ public class EmbedExternalBuilder : EmbedBuilder
         var mimeType = _fileTypeHelper.GetMimeTypeFromUrl(url);
 
         var image = await response.Content.ReadAsByteArrayAsync();
-        
+
         var thumb = await _embedImageBuilder.UploadImage(image, mimeType);
 
         return thumb;
