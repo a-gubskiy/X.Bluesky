@@ -18,7 +18,7 @@ internal class EmbedExternalBuilder : EmbedBuilder
     public EmbedExternalBuilder(IHttpClientFactory httpClientFactory, Session session, Uri baseUrl, ILogger logger)
         : this(
             httpClientFactory,
-            new Extractor("", new HttpClientPageContentLoader(httpClientFactory), new LanguageDetector()),
+            new Extractor("", new HttpClientContentLoader(httpClientFactory), new LanguageDetector()),
             session,
             baseUrl,
             logger)
@@ -47,7 +47,7 @@ internal class EmbedExternalBuilder : EmbedBuilder
     /// <returns></returns>
     internal async Task<IEmbed> GetEmbedCard(Uri url)
     {
-        var metadata = await _extractor.ExtractAsync(url);
+        var metadata = await _extractor.Extract(url);
 
         var card = new External
         {

@@ -7,7 +7,7 @@ namespace X.Bluesky;
 /// <summary>
 /// Interface for resolving Bluesky user mentions to their decentralized identifiers (DIDs).
 /// </summary>
-internal interface IMentionResolver
+public interface IMentionResolver
 {
     /// <summary>
     /// Resolves a Bluesky handle or mention to its decentralized identifier (DID).
@@ -24,7 +24,7 @@ internal interface IMentionResolver
 /// Implementation of <see cref="IMentionResolver"/> that resolves Bluesky mentions to DIDs 
 /// by calling the Bluesky API.
 /// </summary>
-internal class MentionResolver : IMentionResolver
+public class MentionResolver : IMentionResolver
 {
     private readonly Uri _baseUrl;
     private readonly ILogger _logger;

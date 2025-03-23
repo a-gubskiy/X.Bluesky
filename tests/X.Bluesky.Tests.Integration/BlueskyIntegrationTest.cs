@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
 using X.Bluesky.Authorization;
+using X.Web.MetaExtractor.ContentLoaders.HttpClient;
 using Xunit;
 
 namespace X.Bluesky.Tests.Integration;
@@ -50,7 +51,7 @@ public class BlueskyIntegrationTest
     public async Task TestResolveMention()
     {
         var mention = "@andrew.gubskiy.com";
-        var httpClientFactory = new BlueskyHttpClientFactory();
+        var httpClientFactory = new HttpClientFactory();
 
         IMentionResolver mentionResolver = new MentionResolver(httpClientFactory, new Uri("https://bsky.social"), new NullLogger<MentionResolver>());
         
