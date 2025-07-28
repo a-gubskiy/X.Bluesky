@@ -11,8 +11,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" PrivateAssets="all" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="X.Web.MetaExtractor" Version="2.1.1" />
     </ItemGroup>
 
@@ -23,12 +23,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../../README.md" Pack="true" PackagePath="\"/>
-        <None Include="../../LICENSE.md" Pack="true" PackagePath="\"/>
+        <None Include="../../README.md" Pack="true" PackagePath="\" />
+        <None Include="../../LICENSE.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../../x.png" Pack="true" PackagePath="\"/>
+        <None Include="../../x.png" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>
