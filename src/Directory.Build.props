@@ -7,17 +7,17 @@
         <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
         <PackageIcon>x.png</PackageIcon>
 
-        <Authors>Andrew Gubskiy</Authors>
-        <Copyright>Andrew Gubskiy © 2025</Copyright>
+        <Authors>Andrey Gubskiy</Authors>
+        <Copyright>Andrey Gubskiy © 2025</Copyright>
         <Company>Ukrainian .NET Developer Community</Company>
 
-        <Version>2.0.4</Version>
-        <AssemblyVersion>2.0.4</AssemblyVersion>
-        <FileVersion>2.0.4</FileVersion>
-        <PackageVersion>2.0.4</PackageVersion>
+        <Version>2.0.5</Version>
+        <AssemblyVersion>2.0.5</AssemblyVersion>
+        <FileVersion>2.0.5</FileVersion>
+        <PackageVersion>2.0.5</PackageVersion>
 
         <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://github.com/ernado-x/X.Bluesky.git</RepositoryUrl>
+        <RepositoryUrl>https://github.com/a.gubskiy/X.Bluesky.git</RepositoryUrl>
         <PackageProjectUrl>https://andrew.gubskiy.com/open-source</PackageProjectUrl>
     </PropertyGroup>
 
