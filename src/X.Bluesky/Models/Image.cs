@@ -25,4 +25,18 @@ public record Image
     /// </summary>
     /// <value>A string containing the alt text. Defaults to an empty string.</value>
     public string Alt { get; init; } = "";
+
+    /// <summary>
+    /// Gets or initializes the width of the image in pixels.
+    /// This property is optional and can be null if the width is not specified.
+    /// If both Width and Height are specified, an Aspect Ratio hint will be provided to Bluesky.
+    /// </summary>
+    public int? Width { get; init; } = null;
+
+    /// <summary>
+    /// Gets or initializes the height of the image in pixels.
+    /// This property is optional and can be null if the height is not specified.
+    /// If both Width and Height are specified, an Aspect Ratio hint will be provided to Bluesky.
+    /// </summary>
+    public int? Height { get; init; } = null;
 }
