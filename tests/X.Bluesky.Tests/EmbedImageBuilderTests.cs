@@ -30,7 +30,7 @@ public class EmbedImageBuilderTests
         _session = new Session { AccessJwt = "test-token" };
         _baseUrl = new Uri("https://bsky.test");
         _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-           
+
         var httpClient = new HttpClient(_mockHttpMessageHandler.Object);
 
         _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>()))
@@ -181,6 +181,47 @@ public class EmbedImageBuilderTests
         // Assert
         Assert.NotNull(result);
         Assert.Empty(result.Images);
+    }
+
+    [Fact]
+    public async Task GetEmbedCard_WithKnownSize_ReturnsEmbedWithAspectRatio()
+    {
+        // Arrange
+        var images = new List<Image>
+        {
+            new Image { Content = new byte[] { 1, 2, 3 }, MimeType = "image/jpeg", Alt = "Image 1", Width = 800, Height = 600 },
+            new Image { Content = new byte[] { 1, 2, 3 }, MimeType = "image/jpeg", Alt = "Image 2", Width = 800 },
+        };
+
+        var responseContent = JsonConvert.SerializeObject(new BlobResponse
+        {
+            Blob = new Thumb
+            {
+                Ref = new ThumbRef
+                {
+                    Link = "test-ref",
+                },
+                Size = 100,
+                MimeType = "image/jpeg"
+            }
+        });
+
+        SetupMockHttpResponse(HttpStatusCode.OK, responseContent);
+
+        var builder = new EmbedImageBuilder(_mockHttpClientFactory.Object, _session, _baseUrl, _mockLogger.Object);
+
+        // Act
+        var result = await builder.GetEmbedCard(images) as EmbedImage;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Images.Count);
+        Assert.Equal("Image 1", result.Images[0].Alt);
+        Assert.IsType<AspectRatio>(result.Images[0].AspectRatio);
+        Assert.Equal(800, result.Images[0].AspectRatio.Width);
+        Assert.Equal(600, result.Images[0].AspectRatio.Height);
+        Assert.Equal("Image 2", result.Images[1].Alt);
+        Assert.Null(result.Images[1].AspectRatio);
     }
 
     private void SetupMockHttpResponse(HttpStatusCode statusCode, string content)
