@@ -21,7 +21,7 @@ internal class EmbedImageBuilder : EmbedBuilder
     }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="images"></param>
     /// <returns></returns>
@@ -37,7 +37,9 @@ internal class EmbedImageBuilder : EmbedBuilder
             {
                 Image = thumb,
                 Alt = image.Alt,
-                // AspectRatio = null
+                AspectRatio = image.Width is not null && image.Height is not null
+                    ? new AspectRatio() { Width = image.Width.Value, Height = image.Height.Value }
+                    : null
             });
         }
 
