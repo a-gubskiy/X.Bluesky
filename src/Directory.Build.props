@@ -11,13 +11,13 @@
         <Copyright>Andrey Gubskiy © 2025</Copyright>
         <Company>Ukrainian .NET Developer Community</Company>
 
-        <Version>2.0.5</Version>
-        <AssemblyVersion>2.0.5</AssemblyVersion>
-        <FileVersion>2.0.5</FileVersion>
-        <PackageVersion>2.0.5</PackageVersion>
+        <Version>2.0.7</Version>
+        <AssemblyVersion>2.0.7</AssemblyVersion>
+        <FileVersion>2.0.7</FileVersion>
+        <PackageVersion>2.0.7</PackageVersion>
 
         <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://github.com/a.gubskiy/X.Bluesky.git</RepositoryUrl>
+        <RepositoryUrl>https://github.com/a-gubskiy/X.Bluesky</RepositoryUrl>
         <PackageProjectUrl>https://andrew.gubskiy.com/open-source</PackageProjectUrl>
     </PropertyGroup>
 
