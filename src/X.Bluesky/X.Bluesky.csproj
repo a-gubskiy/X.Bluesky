@@ -12,7 +12,7 @@
 
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" PrivateAssets="all" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="X.Web.MetaExtractor" Version="2.1.1" />
     </ItemGroup>
 
